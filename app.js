@@ -40,7 +40,7 @@ const specs = swaggerJsDoc(options);
 const PARAMS = require("./parameter");
 
 const port = PARAMS.NODE_PORT; //Save the port number
-const MONGO_URL = PARAMS.MONGO_URL;
+const MONGO_URL = PARAMS.DB_URL;
 
 const cors = require('cors');
 /*const corsOptions={
