@@ -105,7 +105,7 @@ function initApp(){
 
 
   var routes = Files.walk(__dirname + "/routes");
-  console.log("Routes", routes);
+  //console.log("Routes", routes);
   for(var i=0; i < routes.length; i++)
      if(routes[i].indexOf("routes") !==1) require(routes[i])(app,acl);
                   
