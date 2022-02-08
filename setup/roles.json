@@ -1,0 +1,200 @@
+[
+{
+    "roles" : "admin",
+    "menus" : [],
+    "allows" : [
+        {
+            "resources" : "clients",
+            "permissions" : [
+                "create",
+                "update",
+                "delete",
+                "retreive"
+            ]
+        },
+        {
+            "resources" : "promotions",
+            "permissions" : [
+                "retreive",
+                "delete",
+                "update",
+                "create"
+            ]
+        },
+        {
+            "resources" : "users",
+            "permissions" : [
+                "create",
+                "retreive",
+                "update",
+                "delete"
+            ]
+        },
+        {
+            "resources" : "fidelites",
+            "permissions" : [
+                "retreive",
+                "update"
+            ]
+        },
+        {
+            "resources" : "parametres",
+            "permissions" : [
+                "delete",
+                "create",
+                "update",
+                "list"
+            ]
+        }
+    ]
+},
+{
+    "roles" : "user",
+    "menus" : [],
+    "allows" : [
+       {
+            "resources" : "clients",
+            "permissions" : [
+                "create",
+                "update",
+                "delete",
+                "retreive"
+            ]
+        },
+        {
+            "resources" : "promotions",
+            "permissions" : [
+                "retreive",
+                "delete",
+                "update",
+                "create"
+            ]
+        },
+        {
+            "resources" : "users",
+            "permissions" : [
+                "create",
+                "retreive",
+                "update",
+                "delete"
+            ]
+        },
+        {
+            "resources" : "fidelites",
+            "permissions" : [
+                "retreive",
+                "update"
+            ]
+        },
+        {
+            "resources" : "parametres",
+            "permissions" : [
+                "delete",
+                "create",
+                "update",
+                "list"
+            ]
+        }
+    ]
+},
+{
+    "roles" : "admin_agent",
+    "menus" : [],
+    "allows" : [
+        {
+            "resources" : "clients",
+            "permissions" : [
+                "create",
+                "update",
+                "delete",
+                "retreive"
+            ]
+        },
+        {
+            "resources" : "promotions",
+            "permissions" : [
+                "retreive",
+                "delete",
+                "update",
+                "create"
+            ]
+        },
+        {
+            "resources" : "users",
+            "permissions" : [
+                "create",
+                "retreive",
+                "update",
+                "delete"
+            ]
+        },
+        {
+            "resources" : "fidelites",
+            "permissions" : [
+                "retreive",
+                "update"
+            ]
+        },
+        {
+            "resources" : "parametres",
+            "permissions" : [
+                "delete",
+                "create",
+                "update",
+                "list"
+            ]
+        }
+    ]
+},
+{
+    "roles" : "agent",
+    "menus" : [],
+    "allows" : [
+        {
+            "resources" : "clients",
+            "permissions" : [
+                "create",
+                "update",
+                "delete",
+                "retreive"
+            ]
+        },
+        {
+            "resources" : "promotions",
+            "permissions" : [
+                "retreive",
+                "delete",
+                "update",
+                "create"
+            ]
+        },
+        {
+            "resources" : "users",
+            "permissions" : [
+                "create",
+                "retreive",
+                "update",
+                "delete"
+            ]
+        },
+        {
+            "resources" : "fidelites",
+            "permissions" : [
+                "retreive",
+                "update"
+            ]
+        },
+        {
+            "resources" : "parametres",
+            "permissions" : [
+                "delete",
+                "create",
+                "update",
+                "list"
+            ]
+        }
+    ]
+}
+]
+
+
