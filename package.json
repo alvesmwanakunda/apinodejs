@@ -2,12 +2,12 @@
   "name": "henri",
   "version": "1.0.0",
   "description": "Projet gestion client",
-  "main": "app.js",
+  "main": "index.js",
   "engines": {
     "node" : "14.x"
   },
   "scripts": {
-    "start": "node app.js"
+    "start": "node index.js"
   },
   "author": "Alves Mwanza",
   "license": "ISC",

@@ -102,16 +102,14 @@ function initApp(){
     if (req.method == "OPTIONS") return res.sendStatus(200);
     next();
   });
-
+  app.get('/', (req, res)=> res.send('Koonda API ready'));   
+  app.use('/api-docs',swaggerUI.serve, swaggerUI.setup(specs));  
 
   var routes = Files.walk(__dirname + "/routes");
   //console.log("Routes", routes);
   for(var i=0; i < routes.length; i++)
      if(routes[i].indexOf("routes") !==1) require(routes[i])(app,acl);
-
-  app.get('/', (req, res)=> res.send('Koonda API ready'));   
-
-  app.use('/api-docs',swaggerUI.serve, swaggerUI.setup(specs));                
+              
   app.listen(port,()=>{
       console.log(`Now listening on port ${port}`);
   });
