@@ -1,12 +1,12 @@
 const express = require('express'); //Import the express dependency
 const app = express(); 
-const fs = require('fs');
-const http = require('http').Server(app);
+//const fs = require('fs');
+//const http = require('http').Server(app);
 const mongoose = require('mongoose');
 const bodyParser = require("body-parser");
 const node_acl = require('acl');
 const roles =  require("./models/roles.model");
-const Files = require("./files");
+//const Files = require("./files");
 const compression = require("compression");
 var path = require('path');
 
@@ -91,9 +91,8 @@ function initApp(){
   );
   app.use(compression());
   app.use(express.static(path.join(__dirname,'public')));
-  app.use(express.json({
-    limit:'50mb'
-  }));
+  app.use(express.json({extended:false}));
+
   app.use(function(req,res,next){
     res.setHeader("Acces-Control-Allow-Origin","*");
     res.setHeader("Access-Control-Allow-Methods","GET, POST, OPTIONS, PUT, PATCH, DELETE");
@@ -105,10 +104,10 @@ function initApp(){
   app.get('/', (req, res)=> res.send('Koonda API ready'));   
   app.use('/api-docs',swaggerUI.serve, swaggerUI.setup(specs));  
 
-  var routes = Files.walk(__dirname + "/routes");
+  //var routes = Files.walk(__dirname + "/routes");
   //console.log("Routes", routes);
-  for(var i=0; i < routes.length; i++)
-     if(routes[i].indexOf("routes") !==1) require(routes[i])(app,acl);
+  /*for(var i=0; i < routes.length; i++)
+     if(routes[i].indexOf("routes") !==1) require(routes[i])(app,acl);*/
               
   app.listen(port,()=>{
       console.log(`Now listening on port ${port}`);
