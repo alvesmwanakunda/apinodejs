@@ -4,8 +4,8 @@
      var Entreprise = require('../models/entreprises.model').EntrepriseModel;
      var crypto  = require('crypto');
      var jwt = require('jsonwebtoken');
-     var Encryption = require('../utils/Encryption');
-     var config = require('../config');
+     var Encryption = require('../../utils/Encryption');
+     var config = require('../../config');
      var Role = require('../models/roles.model');
      var Codes = require('voucher-code-generator');
      var nodemailer = require('nodemailer');
