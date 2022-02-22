@@ -167,6 +167,56 @@
       */
       app.route('/users/exist')
          .post(Ctrl.userExist);
+      
+      /**
+       * @swagger
+       * /validcode:
+       *   post:
+       *     summary: User validation by code 
+       *     tags: [Users]
+       *     requestBody:
+       *       required: true
+       *       content:
+       *         application/json:
+       *           schema:
+       *             $ref: '#/components/schemas/Users'
+       *     responses:
+       *       200:
+       *         description: The user was successfully created
+       *         content:
+       *           application/json:
+       *             schema:
+       *               $ref: '#/components/schemas/Users'
+       *       500:
+       *         description: Some server error
+      */  
+      app.route('/validcode')
+         .post(Ctrl.validcode);
+         
+      /**
+       * @swagger
+       * /validemail:
+       *   post:
+       *     summary: User validation by email 
+       *     tags: [Users]
+       *     requestBody:
+       *       required: true
+       *       content:
+       *         application/json:
+       *           schema:
+       *             $ref: '#/components/schemas/Users'
+       *     responses:
+       *       200:
+       *         description: The user was successfully created
+       *         content:
+       *           application/json:
+       *             schema:
+       *               $ref: '#/components/schemas/Users'
+       *       500:
+       *         description: Some server error
+      */  
+      app.route('/validemail')
+         .post(Ctrl.validemail);   
   }
   
 })();

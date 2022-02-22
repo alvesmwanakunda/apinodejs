@@ -16,11 +16,11 @@
         email:{
             type:String,
             unique:true,
-            required:true,
+            required:false,
         },
         phone:{
           type:String,
-          required:true
+          required:false
         },
         password:{
           type: String,
@@ -29,7 +29,7 @@
         },
         valid:{
             type: Boolean,
-            default: true
+            default: false
         },
         desactive:{
             type: Boolean,

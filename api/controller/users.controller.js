@@ -10,6 +10,8 @@
      var Codes = require('voucher-code-generator');
      var nodemailer = require('nodemailer');
      const mailService = require('../services/mail.service');
+     const smsService =  require('../services/sms.service');
+     var Isemail = require('isemail');
 
 
      module.exports = function(acl){
@@ -19,9 +21,26 @@
 
                         let entreprise = new Entreprise();
 
-                        req.body.email = req.body.email;
-                        req.body.phone = req.body.phone;
-                        req.body.role = 'user';
+                        var query = {};
+                        if(!req.body.emailorphone)
+                           return res.json({
+                               success:false,
+                               message: ""
+                           });
+
+                        if(Isemail.validate(req.body.emailorphone)){
+                            query = {
+                                email:req.body.emailorphone
+                            };
+                            req.body.email = req.body.emailorphone;
+                        }else{
+                            query ={
+                                phone:req.body.emailorphone
+                            };
+                            req.body.phone = req.body.emailorphone;
+                        }
+
+                        req.body.role = 'admin_agent';
                        
                         var user = new User(req.body);
 
@@ -29,7 +48,7 @@
                         entreprise.createur = user._id;
                         
 
-                        User.findOne({email:user.email}, function(err, userexists){
+                        User.findOne(query, function(err, userexists){
                             if(err)
                                 return res.status(500).json({
                                     success: false,
@@ -42,35 +61,65 @@
                                 })
                             }
 
-                            user.password = crypto.createHash('md5').update(user.password).digest("hex");
+                            User.remove(query, function(err){
 
-                            user.save(function(err, user){
-                                if(err)
-                                   return res.status(500).json({
-                                       success: false,
-                                       message: err
-                                   });
-                                var code = Codes.generate({
-                                    length:128,
-                                    count:1,
-                                    charset: Codes.charset("alphanumeric")
-                                });
-                                code = code[0];
-                                user.code = code;
+                                user.password = crypto.createHash('md5').update(user.password).digest("hex");
+
                                 user.save(function(err, user){
                                     if(err)
-                                      return res.status(500).json({
-                                          success: false,
-                                          message: err
-                                      });
-                                    entreprise.save(); 
-                                    mailService.inscription(user);
-                                    res.json({
-                                        success: true,
-                                        message:user
-                                    });   
-                                })   
-                            });
+                                    return res.status(500).json({
+                                        success: false,
+                                        message: err
+                                    });
+                                    if(user.phone){
+
+                                        var code = Codes.generate({
+                                            length: 4,
+                                            count: 1,
+                                            charset: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                        });
+                                        code = code[0];
+                                        user.code = code;
+                                        console.log("Code", code);
+                                        user.save(function(err, user){
+                                            if(err)
+                                            return res.status(500).json({
+                                                success: false,
+                                                message: err
+                                            });
+                                            entreprise.save(); 
+                                            smsService.inscription(user);
+                                            res.json({
+                                                success: true,
+                                                message:user
+                                            });   
+                                        }) 
+
+                                    }else{
+                                        var code = Codes.generate({
+                                        length:128,
+                                        count:1,
+                                        charset: Codes.charset("alphanumeric")
+                                        });
+                                        code = code[0];
+                                        user.code = code;
+                                        user.save(function(err, user){
+                                            if(err)
+                                            return res.status(500).json({
+                                                success: false,
+                                                message: err
+                                            });
+                                            entreprise.save(); 
+                                            mailService.inscription(user);
+                                            res.json({
+                                                success: true,
+                                                message:user
+                                            });   
+                                        }) 
+                                    }   
+                                });
+                            })
+   
                         });  
                      
                
@@ -92,17 +141,28 @@
                 })
             },
             login:function(req,res){
-                  if(!req.body.email)
+                  if(!req.body.emailorphone)
                     return res.send({
                         success: false,
                         message: "L'authentification a échoué"
                     });
                   //console.log("Email", req.body.email)
                   var query={};
-                  query = {
-                      email:req.body.email,
-                      desactive: false
-                  };
+                  if(Isemail.validate(req.body.emailorphone)){
+
+                    query = {
+                         email:req.body.emailorphone,
+                         desactive: false,
+                         valid:true
+                     }
+                  }else{
+                      query = {
+                        phone: req.body.emailorphone,
+                        desactive: false,
+                        valid:true
+                    };
+                  }
+                  
                   query.password = crypto.createHash('md5').update(req.body.password).digest("hex");
 
                   //console.log("Query", query);
@@ -141,7 +201,11 @@
                               message:{
                                   token:token,
                                   code:token,
-                                  user:user
+                                  user:user,
+                                  prenom: (user.prenom ? user.prenom : ''),
+                                  nom: (user.nom ? user.nom : ''),
+                                  email: (user.email ? user.email : ''),
+                                  phone: (user.phone ? user.phone : '')
                               }
                           });
                       });
@@ -155,7 +219,14 @@
                        success: false,
                        message:""
                    });
-                query = {email:req.body.email};
+                if(Isemail.validate(req.body.emailorphone)){
+                  query = {email:req.body.emailorphone};
+                  req.body.email = req.body.emailorphone;
+                } else{
+                   query = {phone:req.body.emailorphone};
+                   req.body.phone = req.body.emailorphone; 
+                }  
+                
 
                 User.findOne(query, function(err, user){
                     if(err)
@@ -169,26 +240,64 @@
                             message: "notfound"
                         });
                     }
+
+                    if(Isemail.validate(req.body.emailorphone)){
+
+                        var code = Codes.generate({
+                            length:128,
+                            count:1,
+                            charset:Codes.charset("alphanumeric")
+                        });
+                        code = code[0];
+                        user.code = code;
+                        user.save(function(err,user){
+                            if(err)
+                            return res.status(500).json({
+                                success: false,
+                                message: err
+                            });
+                            mailService.reset(user);  
+                            res.json({
+                                success:true,
+                                message:"ok"
+                            });  
+                        });
+
+                    }
+                    else{
+
+                        var code = Codes.generate({
+                            length:128,
+                            count:1,
+                            charset:Codes.charset("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+                        });
+                        code = code[0];
+                        user.code = code;
+
+                        var password = Codes.generate({
+
+                            length: 10,
+                            count: 1,
+                            charset: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                        });
+                        password = password[0];
+                        user.password = crypto.createHash('md5').update(password).digest("hex");
+
+                        user.save(function(err,user){
+                            if(err)
+                            return res.status(500).json({
+                                success: false,
+                                message: err
+                            });
+                            smsService.reset(user,code,password);  
+                            res.json({
+                                success:true,
+                                message:"ok"
+                            });  
+                        });
+
+                    }
                     
-                    var code = Codes.generate({
-                        length:128,
-                        count:1,
-                        charset:Codes.charset("alphanumeric")
-                    });
-                    code = code[0];
-                    user.code = code;
-                    user.save(function(err,user){
-                        if(err)
-                          return res.status(500).json({
-                              success: false,
-                              message: err
-                          });
-                        mailService.reset(user);  
-                        res.json({
-                            success:true,
-                            message:"ok"
-                        });  
-                    });
                 });
             },
             changePassword:function(req,res){
@@ -221,7 +330,74 @@
                         });
                     });
                 });
-            }
+            },
+            validcode: function (req, res) {
+                User.findOne({
+                    phone: req.body.phone,
+                    code: req.body.code
+                    }, function (err, user) {
+                if (err)
+                    return res.status(500).json({
+                    success: false,
+                    message: err
+                    });
+
+                if (!user) {
+                    return res.json({
+                    success: false,
+                    message: "notfound"
+                    });
+                }
+
+                user.valid = true;
+                user.save(function (err, user) {
+                    if (err)
+                    return res.status(500).json({
+                        success: false,
+                        message: err
+                    });
+
+                    res.json({
+                    success: true,
+                    message: user
+                    });
+                });
+                });
+            },
+            validemail: function (req, res) {
+                User.findOne({
+                email: req.body.email,
+                code: req.body.code,
+                valid: false
+                }, function (err, user) {
+                if (err)
+                    return res.status(500).json({
+                    success: false,
+                    message: err
+                    });
+
+                if (!user) {
+                    return res.json({
+                    success: false,
+                    message: "notfound"
+                    });
+                }
+
+                user.valid = true;
+                user.save(function (err, user) {
+                    if (err)
+                    return res.status(500).json({
+                        success: false,
+                        message: err
+                    });
+
+                    res.json({
+                    success: true,
+                    message: user
+                    });
+                });
+                });
+            },
             
         };
      };

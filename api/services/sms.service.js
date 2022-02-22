@@ -1,0 +1,46 @@
+var twilio = require("twilio");
+module.exports = {
+
+
+    inscription:(user)=>{
+        return new Promise((resolve, reject)=>{
+
+                  let indicatif = "+221";
+                  var twilioclient = new twilio(process.env.accountSid, process.env.authToken);
+
+                  twilioclient.messages.create({
+                      body: 'Voici votre code de validation restaurant : ' + user.code,
+                      to: indicatif + user.phone,
+                      from: process.env.twiliofrom
+                    })
+                    .then((message) => {
+                      resolve(message);  
+                    }).catch((err) => {
+                      console.log(err);
+                      reject(err);
+                    });
+              
+        });
+    },
+    reset:(user, code, password)=>{
+        return new Promise((resolve, reject)=>{
+
+                let indicatif = "+221";
+
+                var twilioclient = new twilio(process.env.accountSid, process.env.authToken);
+                twilioclient.messages.create({
+                    body: 'Bienvenue sur RESTAURANT, voici votre code de validation : ' + code + '\n\nVotre nouveau mot de passe RESTAURANT.  est :' + password,
+                    to: indicatif + user.phone,
+                    from: process.env.twiliofrom
+                  })
+                  .then((message) => {
+                    resolve(message);
+                  }).catch((err) => {
+                    console.log(err);
+                    reject(err);
+                  });
+        });
+    }
+    
+
+}
