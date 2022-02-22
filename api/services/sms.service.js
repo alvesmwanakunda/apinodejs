@@ -9,7 +9,7 @@ module.exports = {
                   var twilioclient = new twilio(process.env.accountSid, process.env.authToken);
 
                   twilioclient.messages.create({
-                      body: 'Voici votre code de validation restaurant : ' + user.code,
+                      body: 'Voici votre code de validation wefid : ' + user.code,
                       to: indicatif + user.phone,
                       from: process.env.twiliofrom
                     })
@@ -29,7 +29,7 @@ module.exports = {
 
                 var twilioclient = new twilio(process.env.accountSid, process.env.authToken);
                 twilioclient.messages.create({
-                    body: 'Bienvenue sur RESTAURANT, voici votre code de validation : ' + code + '\n\nVotre nouveau mot de passe RESTAURANT.  est :' + password,
+                    body: 'Bienvenue sur WEFID, voici votre code de validation : ' + code + '\n\nVotre nouveau mot de passe WEFID.  est :' + password,
                     to: indicatif + user.phone,
                     from: process.env.twiliofrom
                   })
