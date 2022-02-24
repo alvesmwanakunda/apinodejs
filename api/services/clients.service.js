@@ -21,7 +21,7 @@ module.exports = {
                 logger:false,
                 debug:false
             },{
-                from: 'Restaurant <' + process.env.SMTP_FROM + '>',
+                from: 'Wefid <' + process.env.SMTP_FROM + '>',
                 headers:{
                     'X-Laziness-level':1000
                 }
@@ -29,7 +29,7 @@ module.exports = {
             
             let message = {
                 to: user.email,
-                subject: 'Inscription au compte Restaurant',
+                subject: 'Inscription au compte Wefid',
                 html: 'Bonjour, <b>Cher utilisateur</b> <br/> Nous avons bien pris en compte votre inscription sur, <b>Wefid</b>.<br/> Votre identifiant de connexion est le suivant: <span style="color:#008CBA; text-decoration:underline">' + user.email +'</span><br/>Votre mot de passe temporaire est: <span style="color:#008CBA; text-decoration:underline">' + password +'</span> <br/> Veuillez cliquer sur ce lien pour valider votre compte <a href="' + process.env.validecompte + user.code + '&email=' + user.email + '">' + process.env.validecompte + user.code + '&email=' + user.email + '</a>' 
             };
             transporter.sendMail(message, (error, user)=>{
@@ -42,7 +42,7 @@ module.exports = {
         });
     },
 
-    inscriptionSms:(user)=>{
+    inscriptionSms:(user,password)=>{
 
         return new Promise((resolve, reject)=>{
 
@@ -50,7 +50,7 @@ module.exports = {
                   var twilioclient = new twilio(process.env.accountSid, process.env.authToken);
 
                   twilioclient.messages.create({
-                      body: 'Voici votre code de validation wefid : ' + user.code,
+                      body: 'Voici votre code de validation wefid : ' + user.code +'.Votre mot de passe temporaire est : ' +password,
                       to: indicatif + user.phone,
                       from: process.env.twiliofrom
                     })

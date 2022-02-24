@@ -108,7 +108,7 @@
                                                 message: err
                                             });
                                             client.save(); 
-                                            clientService.inscriptionSms(user);
+                                            clientService.inscriptionSms(user, password);
                                             res.json({
                                                 success: true,
                                                 message:user

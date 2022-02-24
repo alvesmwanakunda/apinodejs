@@ -4,6 +4,7 @@
     module.exports = function(app, acl){
 
         var Ctrl = require('../controller/entreprises.controller')(acl);
+        var upload = require("../../middlewares/upload");
 
        /**
        * @swagger
@@ -60,6 +61,11 @@
      */ 
      app.route('/entreprise/user')
          .get(Ctrl.getUserByEntreprise);
+         
+     app.route('/entreprise/:id([a-fA-F\\d]{24})')
+         .put(Ctrl.udpateEntreprise);
+         
+     app.put("/entreprise/image/:id([a-fA-F\\d]{24})", upload.single("uploadfile"),Ctrl.uploadLogo);
 
 
     }

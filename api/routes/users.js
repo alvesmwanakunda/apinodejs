@@ -216,7 +216,19 @@
        *         description: Some server error
       */  
       app.route('/validemail')
-         .post(Ctrl.validemail);   
+         .post(Ctrl.validemail);
+         
+      app.route('/profil/password')
+         .post(Ctrl.changePasswordProfil);
+         
+      app.route('/agent/entreprise/:id([a-fA-F\\d]{24})')
+         .get(Ctrl.listAgent); 
+      
+      app.route('/register/agent/entreprise/:id([a-fA-F\\d]{24})')
+         .post(Ctrl.createAgent);
+         
+      app.route('/delete/agent/entreprise/:id([a-fA-F\\d]{24})/:idEntreprise([a-fA-F\\d]{24})')
+         .delete(Ctrl.deleteAgent);    
   }
   
 })();

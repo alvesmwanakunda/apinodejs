@@ -11,6 +11,9 @@
      var nodemailer = require('nodemailer');
      const mailService = require('../services/mail.service');
      const smsService =  require('../services/sms.service');
+     const entrepriseService = require('../services/entreprises.service');
+     const clientService = require('../services/clients.service');
+     const userService = require('../services/users.service');
      var Isemail = require('isemail');
 
 
@@ -398,6 +401,210 @@
                 });
                 });
             },
+            changePasswordProfil:function(req,res, next){
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+                    if(aclres){
+
+                       let user= await User.findOne({_id:req.decoded.id});
+                       
+                       try {
+
+                        user.password = crypto.createHash('md5').update(req.body.password).digest("hex");
+                        user.save(function(err,user){
+                            if(err)
+                              return res.status(500).json({
+                                  success:false,
+                                  message: err
+                              });
+                            res.json({
+                                success:true,
+                                message:user
+                            });
+                        });
+                           
+                           
+                       } catch (error) {
+                           next(error)
+                       }
+
+                    }else{
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+                    }
+                })
+            },
+
+            listAgent:function(req,res){
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+                    if(aclres){
+
+                        Entreprise.findOne({_id:req.params.id}, function(err, entreprises){
+
+                          let users = entreprises.createur.filter(x => x.role=="agent");
+                          //console.log("User", users);
+
+                           if(err)
+                            return res.status(500).json({
+                                success:false,
+                                message: err
+                            });
+                          res.json({
+                              success:true,
+                              message:users
+                          });
+
+                        }).populate('createur');
+
+                    }else{
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+                    }
+                })
+            },
+
+            createAgent:function(req, res){
+
+                var query = {};
+                if(!req.body.emailorphone)
+                   return res.json({
+                       success:false,
+                       message: ""
+                   });
+
+                if(Isemail.validate(req.body.emailorphone)){
+                    query = {
+                        email:req.body.emailorphone
+                    };
+                    req.body.email = req.body.emailorphone;
+                }else{
+                    query ={
+                        phone:req.body.emailorphone
+                    };
+                    req.body.phone = req.body.emailorphone;
+                }
+
+                req.body.role = 'agent';
+               
+                var user = new User(req.body);
+
+                User.findOne(query, function(err, userexists){
+                    if(err)
+                        return res.status(500).json({
+                            success: false,
+                            message: err
+                        });
+                    if(userexists){
+                        return res.json({
+                            success: false,
+                            message: "already exists"
+                        })
+                    }
+
+                    User.remove(query, function(err){
+
+                        var password = Codes.generate({
+                            length:8,
+                            count:1,
+                            charset: Codes.charset("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+                          });
+                          password = password[0];
+
+                        user.password = crypto.createHash('md5').update(password).digest("hex");
+
+                        user.save(function(err, user){
+                            if(err)
+                            return res.status(500).json({
+                                success: false,
+                                message: err
+                            });
+                            if(user.phone){
+
+                                var code = Codes.generate({
+                                    length: 4,
+                                    count: 1,
+                                    charset: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                });
+                                code = code[0];
+                                user.code = code;
+                                console.log("Code", code);
+                                user.save(function(err, user){
+                                    if(err)
+                                    return res.status(500).json({
+                                        success: false,
+                                        message: err
+                                    });
+                                    entrepriseService.addUserToEntreprise(req.params.id,user._id);
+                                    clientService.inscriptionSms(user, password);
+                                    res.json({
+                                        success: true,
+                                        message:user
+                                    });   
+                                }) 
+
+                            }else{
+                                var code = Codes.generate({
+                                length:128,
+                                count:1,
+                                charset: Codes.charset("alphanumeric")
+                                });
+                                code = code[0];
+                                user.code = code;
+                                user.save(function(err, user){
+                                    if(err)
+                                    return res.status(500).json({
+                                        success: false,
+                                        message: err
+                                    });
+                                    entrepriseService.addUserToEntreprise(req.params.id,user._id);
+                                    clientService.inscriptionClient(user,password);
+                                    res.json({
+                                        success: true,
+                                        message:user
+                                    });   
+                                }) 
+                            }   
+                        });
+                    })
+
+                });  
+             
+       
+            },
+
+            deleteAgent:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+                    if(aclres){
+
+                     User.findOne({_id:req.params.id},function(err, user){
+
+                        if(err){
+                            return res.status(500).json({
+                                success:false,
+                                message: err
+                            });
+                        }else{
+                            userService.delete(user._id);
+                            entrepriseService.deleteUserToEntreprise(req.params.idEntreprise,req.params.id);
+                            res.status(200).end()
+                        }                            
+                     })   
+
+                    }else{
+
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+
+                    }
+                })
+
+            }
             
         };
      };

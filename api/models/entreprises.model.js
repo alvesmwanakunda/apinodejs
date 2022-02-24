@@ -26,6 +26,10 @@
             type:String,
             required:false
         },
+        image:{
+           type: String,
+           required:false
+        },
         createur:[{
             type: Schema.ObjectId,
             ref: "Users",
