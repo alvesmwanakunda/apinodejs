@@ -196,8 +196,8 @@ function initApp(){
   for(var i=0; i < routes.length; i++)
      if(routes[i].indexOf("routes") !==1) require(routes[i])(app,acl);
               
-  app.listen(port,()=>{
-      console.log(`Now listening on port ${port}`);
+  app.listen(process.env.API_PORT,'0.0.0.0',()=>{
+      console.log(`Now listening on port ${process.env.API_PORT}`);
   });
   
 }
