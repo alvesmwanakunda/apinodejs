@@ -1,12 +1,12 @@
 var nodemailer = require('nodemailer');
+var sgMail = require('@sendgrid/mail');
 module.exports = {
 
 
-    inscription: async (user)=>{
+    /*inscription: async (user)=>{
         return await new Promise((resolve, reject)=>{
 
             let transporter = nodemailer.createTransport({
-                service: 'gmail',
                 host: process.env.SMTP_SERVER,
                 port: process.env.SMTP_PORT,
                 secure: false,
@@ -44,7 +44,7 @@ module.exports = {
                 
             });
         });
-    },
+    },*/
     reset:(user)=>{
         return new Promise((resolve, reject)=>{
 
@@ -78,7 +78,35 @@ module.exports = {
                 transporter.close();
             });
         });
-    }
+    },
     
+    inscription: async (user)=>{
+        return await new Promise((resolve, reject)=>{
+
+            sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+            const msg = {
+                to: user.email,
+                from: 'Wefid <' + process.env.SMTP_FROM + '>',
+                subject: 'Inscription au compte Wefid',
+                html: 'Bonjour, <b>Cher utilisateur</b> <br/> Nous avons bien pris en compte votre inscription sur, <b>Wefid</b>.<br/> Votre identifiant de connexion est le suivant: <span style="color:#008CBA; text-decoration:underline">' + user.email +'</span> <br/> Veuillez cliquer sur ce lien pour valider votre compte <a href="' + process.env.validecompte + user.code + '&email=' + user.email + '">' + process.env.validecompte + user.code + '&email=' + user.email + '</a>'
+            };
+            sgMail.send(msg).then(()=>{
+
+                console.log('Email sent');
+                resolve({
+                    message:user,
+                    status:"success"
+                 });
+
+            }).catch((error)=>{
+                console.log("Erreur", error)
+                reject({
+                    message: error,
+                    status: 'error'
+                });
+            })
+
+        });
+    },
 
 }
