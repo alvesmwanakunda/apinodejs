@@ -228,7 +228,7 @@
          .post(Ctrl.createAgent);
          
       app.route('/delete/agent/entreprise/:id([a-fA-F\\d]{24})/:idEntreprise([a-fA-F\\d]{24})')
-         .delete(Ctrl.deleteAgent);    
+         .delete(Ctrl.deleteAgent);   
   }
   
 })();
