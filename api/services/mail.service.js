@@ -84,6 +84,7 @@ module.exports = {
         return await new Promise((resolve, reject)=>{
 
             sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+            console.log("API", process.env.SENDGRID_API_KEY);
             const msg = {
                 to: user.email,
                 from: 'Wefid <' + process.env.SMTP_FROM + '>',
