@@ -2,8 +2,8 @@ var nodemailer = require('nodemailer');
 module.exports = {
 
 
-    inscription:(user)=>{
-        return new Promise((resolve, reject)=>{
+    inscription: async (user)=>{
+        return await Promise((resolve, reject)=>{
 
             let transporter = nodemailer.createTransport({
                 host: process.env.SMTP_SERVER,
@@ -13,8 +13,8 @@ module.exports = {
                     user:process.env.SMTP_USERNAME,
                     pass:process.env.SMTP_PASSWORD
                 },
-                logger:false,
-                debug:false
+                logger:true,
+                debug:true
             },{
                 from: 'Wefid <' + process.env.SMTP_FROM + '>',
                 headers:{
