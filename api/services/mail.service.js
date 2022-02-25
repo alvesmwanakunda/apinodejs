@@ -3,7 +3,7 @@ module.exports = {
 
 
     inscription: async (user)=>{
-        return await Promise((resolve, reject)=>{
+        return await new Promise((resolve, reject)=>{
 
             let transporter = nodemailer.createTransport({
                 host: process.env.SMTP_SERVER,
