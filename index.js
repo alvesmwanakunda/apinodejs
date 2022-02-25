@@ -56,8 +56,7 @@ const swaggerJsDoc = require('swagger-jsdoc');
 const specs = swaggerJsDoc(options);
 const PARAMS = require("./parameter");
 
-const port = PARAMS.NODE_PORT || 5000; //Save the port number
-const MONGO_URL = PARAMS.DB_URL;
+
 const cors = require('cors');
 //global.__basedir = __dirname + "/..";
 
@@ -65,6 +64,9 @@ const cors = require('cors');
 if(process.env.NODE_ENV !=="production"){
   require("dotenv").config();
 }
+
+const port = PARAMS.NODE_PORT || 5000; //Save the port number
+const MONGO_URL = process.env.DB_URL;
 
 var acl = new node_acl(new node_acl.memoryBackend());
 
