@@ -7,8 +7,8 @@ var ObjectId = require('mongoose').Types.ObjectId;
 module.exports = {
 
 
-    inscriptionClient:(user, password)=>{
-        return new Promise((resolve, reject)=>{
+    inscriptionClient: async(user, password)=>{
+        return await new Promise((resolve, reject)=>{
 
             let transporter = nodemailer.createTransport({
                 host: process.env.SMTP_SERVER,
