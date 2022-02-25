@@ -6,6 +6,7 @@ module.exports = {
         return await new Promise((resolve, reject)=>{
 
             let transporter = nodemailer.createTransport({
+                service: 'gmail',
                 host: process.env.SMTP_SERVER,
                 port: process.env.SMTP_PORT,
                 secure: false,
