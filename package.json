@@ -4,9 +4,11 @@
   "description": "Projet gestion client",
   "main": "index.js",
   "engines": {
-    "node": "14.x"
+    "node": "14.x",
+    "npm": ">=7.7.0"
   },
   "scripts": {
+    "postinstall": "npm run build",
     "start": "node index.js"
   },
   "author": "Alves Mwanza",
