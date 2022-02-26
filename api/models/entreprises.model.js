@@ -30,6 +30,10 @@
            type: String,
            required:false
         },
+       categorie: {
+           type: String,
+           required:false
+        },
         createur:[{
             type: Schema.ObjectId,
             ref: "Users",

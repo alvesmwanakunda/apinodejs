@@ -48,6 +48,7 @@
                                 entreprise.phone2 = req.body.phone2;
                                 entreprise.adresse = req.body.adresse;
                                 entreprise.description = req.body.description;
+                                entreprise.categorie = req.body.categorie;
                                 
                                 Entreprise.findOneAndUpdate({_id:req.params.id}, entreprise,{ new: true },function(err, entreprise){
                                     if(err){

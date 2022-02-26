@@ -49,6 +49,7 @@
 
                         entreprise.nom = req.body.entreprise;
                         entreprise.createur = user._id;
+                        entreprise.categorie = req.body.categorie;
                         
 
                         User.findOne(query, function(err, userexists){
@@ -405,26 +406,37 @@
                 acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
                     if(aclres){
 
-                       let user= await User.findOne({_id:req.decoded.id});
-                       
-                       try {
+                       let lostPassword = crypto.createHash('md5').update(req.body.lostpassword).digest("hex");
 
-                        user.password = crypto.createHash('md5').update(req.body.password).digest("hex");
-                        user.save(function(err,user){
-                            if(err)
-                              return res.status(500).json({
-                                  success:false,
-                                  message: err
-                              });
-                            res.json({
-                                success:true,
-                                message:user
+                       let user= await User.findOne({_id:req.decoded.id, password:lostPassword});
+
+                       if(user){
+
+                        try {
+
+                            user.password = crypto.createHash('md5').update(req.body.password).digest("hex");
+                            user.save(function(err,user){
+                                if(err)
+                                  return res.status(500).json({
+                                      success:false,
+                                      message: err
+                                  });
+                                res.json({
+                                    success:true,
+                                    message:user
+                                });
                             });
-                        });
-                           
-                           
-                       } catch (error) {
-                           next(error)
+                               
+                               
+                           } catch (error) {
+                               next(error)
+                           }
+
+                       }else{
+                            return res.json({
+                                success: false,
+                                message: "User not found"
+                            }) 
                        }
 
                     }else{
