@@ -217,8 +217,10 @@
             },
             resetPassword:function(req,res){
 
+                //console.log("Body", req.body);
+
                 var query = {};
-                if(!req.body.email)
+                if(!req.body.emailorphone)
                    return res.json({
                        success: false,
                        message:""

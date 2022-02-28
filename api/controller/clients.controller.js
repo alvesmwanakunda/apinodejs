@@ -379,7 +379,40 @@
                         });
                     }
                 })
+            },
+
+            deleteClient:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+                    if(aclres){
+
+                     Client.findOne({_id:req.params.id},function(err, user){
+
+                        if(err){
+                            return res.status(500).json({
+                                success:false,
+                                message: err
+                            });
+                        }else{
+                            //userService.delete(user._id);
+                            clientService.deleteClientToEntreprise(req.params.id, req.params.idEntreprise);
+                            res.status(200).end()
+                        }                            
+                     })   
+
+                    }else{
+
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+
+                    }
+                })
+
             }
+
+
         }
      }
 

@@ -137,6 +137,29 @@ module.exports = {
             })
 
         });
+    },
+    deleteClientToEntreprise:(idClient,idEntreprise)=>{
+
+
+        return new Promise((resolve, reject)=>{
+        
+            Client.findOneAndUpdate({_id:idClient},{$pull:{entreprise:idEntreprise}},{new:true},function(err,data){
+
+                if(err){
+                    reject({
+                       body: err,
+                       status: 'error'
+                    });
+                }else{
+                  resolve({
+                     body: data,
+                     status: 'success'
+                  });
+                }
+
+            });
+
+        })
     }
 
 

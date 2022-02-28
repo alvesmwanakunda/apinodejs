@@ -111,7 +111,10 @@
 
      /*app.route("/upload/client", upload.single("uploadfile"))
         .post(Ctrl.uploadClient); */
-      app.post("/upload/client/:id([a-fA-F\\d]{24})", upload.single("uploadfile"),Ctrl.uploadClient);     
+      app.post("/upload/client/:id([a-fA-F\\d]{24})", upload.single("uploadfile"),Ctrl.uploadClient); 
+      
+      app.route('/delete/client/entreprise/:id([a-fA-F\\d]{24})/:idEntreprise([a-fA-F\\d]{24})')
+         .delete(Ctrl.deleteClient);
    };
 
 })();
