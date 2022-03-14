@@ -85,6 +85,8 @@
 
                         let entreprise = await Entreprise.findOne({_id:req.params.id});
                         let photo;
+                        //console.log("Body En", req.body);
+                        //console.log("Body File", req.file);
 
                         try {
 

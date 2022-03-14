@@ -22,6 +22,10 @@
           type:String,
           required:false
         },
+        poste:{
+            type:String,
+            required:false
+        },
         password:{
           type: String,
           required:true,
