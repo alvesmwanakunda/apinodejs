@@ -1,3 +1,5 @@
+const { ObjectId } = require('mongodb');
+
 (function(){
 
     'use strict';
@@ -11,7 +13,17 @@
                 acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
                     if(aclres){
 
+
+                        //console.log("Body", req.body);
+
                         let reduction = new Reduction(req.body);
+                        if(!req.body.produit){
+                          reduction.produit=null;
+                        }
+                        if(!req.body.facture){
+                            reduction.facture=false;
+                        }
+
                         reduction.entreprise = req.params.id;
                         reduction.dateCreation = new Date();
                         reduction.save(function(err, reduction){
@@ -85,10 +97,19 @@
 
                         try {
 
+                            if(!req.body.produit){
+                                reduction.produit=null;
+                                reduction.facture = req.body.facture;
+                              }
+                              if(!req.body.facture){
+                                  reduction.facture=false;
+                                  reduction.produit = req.body.produit;
+                            }
+                            
                             reduction.point = req.body.point;
                             reduction.montant = req.body.montant;
                             reduction.typesPoint = req.body.typePoint;
-                            reduction.produit = req.body.produit;
+                            reduction.devise = req.body.devise;
 
                             Reduction.findOneAndUpdate({_id:req.params.id},reduction,{new:true},function(err, reduction){
                                 if(err){

@@ -20,7 +20,7 @@
         produit:{
             type: Schema.ObjectId,
             ref: "Produits",
-            required: true
+            required: false
         },
 
         entreprise:{
@@ -36,6 +36,16 @@
         },
 
         montant:{
+            type:String,
+            required:false
+        },
+
+        facture:{
+            type:Boolean,
+            default:false,
+            required:false
+        },
+        devise:{
             type:String,
             required:false
         }
