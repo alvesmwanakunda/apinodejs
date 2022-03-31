@@ -64,7 +64,7 @@
         },
         entreprise:{
             type: Schema.ObjectId,
-            ref: "Users",
+            ref: "Entreprises",
             required: true
         }
     });
