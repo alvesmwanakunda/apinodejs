@@ -5,20 +5,28 @@ module.exports = {
     inscription:(user)=>{
         return new Promise((resolve, reject)=>{
 
-                  let indicatif = "+221";
-                  var twilioclient = new twilio(process.env.accountSid, process.env.authToken);
+               try {
 
-                  twilioclient.messages.create({
-                      body: 'Voici votre code de validation wefid : ' + user.code,
-                      to: indicatif + user.phone,
-                      from: process.env.twiliofrom
-                    })
-                    .then((message) => {
-                      resolve(message);  
-                    }).catch((err) => {
-                      console.log(err);
-                      reject(err);
-                    });
+                let indicatif = "+221";
+                var twilioclient = new twilio(process.env.accountSid, process.env.authToken);
+
+                twilioclient.messages.create({
+                    body: 'Voici votre code de validation wefid : ' + user.code,
+                    to: indicatif + user.phone,
+                    from: process.env.twiliofrom
+                  })
+                  .then((message) => {
+                    resolve(message);  
+                  }).catch((err) => {
+                    console.log(err);
+                    reject(err);
+                  });
+                 
+               } catch (error) {
+                reject(error);
+               }
+
+                 
               
         });
     },

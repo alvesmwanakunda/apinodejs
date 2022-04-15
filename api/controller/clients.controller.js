@@ -8,6 +8,7 @@
      var Isemail = require('isemail');
      var excelToJson = require('convert-excel-to-json');
      var fs = require("fs");
+     var operationService = require('../services/operation.service');
 
 
      module.exports = function(acl, app){
@@ -24,6 +25,8 @@
                         var client = new Client();
 
                         var query = {};
+
+                        //console.log("Body", req.body);
                         if(!req.body.emailorphone)
                            return res.json({
                                success:false,
@@ -62,7 +65,8 @@
                         codeClient = codeClient[0];
                         client.numeroClient = codeClient;
 
-                         User.findOne({email:user.email}, function(err, userexists){
+
+                         User.findOne(query, function(err, userexists){
                             if(err)
                                 return res.status(500).json({
                                     success: false,
@@ -87,13 +91,15 @@
                                 user.password = crypto.createHash('md5').update(password).digest("hex");
 
                                 user.save(function(err, user){
+                                    //console.log("Erreur", err);
+                                    //console.log("User", user);
                                     if(err)
                                     return res.status(500).json({
                                         success: false,
                                         message: err
                                     });
                                     if(user.phone){
-
+                                    
                                         var code = Codes.generate({
                                             length: 4,
                                             count: 1,
@@ -108,7 +114,10 @@
                                                 message: err
                                             });
                                             client.save(); 
-                                            clientService.inscriptionSms(user, password);
+                                            if(client){
+                                                operationService.addOperationByEntrepise(req.params.id, client._id,user._id);
+                                            }
+                                            //clientService.inscriptionSms(user, password);
                                             res.json({
                                                 success: true,
                                                 message:user
@@ -130,6 +139,9 @@
                                                 message: err
                                             });
                                             client.save(); 
+                                            if(client){
+                                                operationService.addOperationByEntrepise(req.params.id, client._id,user._id);
+                                            }
                                             clientService.inscriptionClient(user,password);
                                             res.json({
                                                 success: true,
@@ -396,6 +408,7 @@
                         }else{
                             //userService.delete(user._id);
                             clientService.deleteClientToEntreprise(req.params.id, req.params.idEntreprise);
+                            operationService.deleteOperationToEntreprise(req.params.id);
                             res.status(200).end()
                         }                            
                      })   

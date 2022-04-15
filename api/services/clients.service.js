@@ -2,6 +2,7 @@ var nodemailer = require('nodemailer');
 var twilio = require("twilio");
 var Client = require('../models/clients.model').ClientsModel;
 var ObjectId = require('mongoose').Types.ObjectId;
+var operationService = require('../services/operation.service');
 
 
 module.exports = {
@@ -128,6 +129,7 @@ module.exports = {
                 });
              }else{
 
+                operationService.addOperationByEntrepise(client.entreprise, client._id,client.user); 
                 resolve({
                    client: client,
                    status: 'success'

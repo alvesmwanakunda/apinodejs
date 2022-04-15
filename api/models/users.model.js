@@ -15,7 +15,7 @@
         },
         email:{
             type:String,
-            unique:true,
+            //unique:true,
             required:false,
         },
         phone:{

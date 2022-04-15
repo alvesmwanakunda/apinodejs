@@ -91,7 +91,11 @@
                                                 success: false,
                                                 message: err
                                             });
-                                            entreprise.save(); 
+                                            entreprise.save();
+                                            if(entreprise){
+                                                entrepriseService.addAvoirToEntreprise(entreprise._id);
+                                                entrepriseService.addTypePoint(entreprise._id);
+                                            } 
                                             smsService.inscription(user);
                                             res.json({
                                                 success: true,
@@ -113,7 +117,11 @@
                                                 success: false,
                                                 message: err
                                             });
-                                            entreprise.save(); 
+                                            entreprise.save();
+                                            if(entreprise){
+                                                entrepriseService.addAvoirToEntreprise(entreprise._id);
+                                                entrepriseService.addTypePoint(entreprise._id);
+                                            }
                                             mailService.inscription(user);
                                             res.json({
                                                 success: true,
@@ -273,7 +281,7 @@
                     else{
 
                         var code = Codes.generate({
-                            length:128,
+                            length:4,
                             count:1,
                             charset:Codes.charset("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
                         });

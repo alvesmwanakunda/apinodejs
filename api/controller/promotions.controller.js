@@ -78,7 +78,12 @@
 
                         var promotion = new Promotion(req.body);
                         promotion.entreprise = req.params.id;
-                        promotion.dateEnvoie = new Date();
+                        if(req.body.jours){
+                            promotion.dateEnvoie = req.body.jours;
+                        }else{
+                            promotion.dateEnvoie = new Date();
+                        }
+                       
 
                         if(req.file){
 
