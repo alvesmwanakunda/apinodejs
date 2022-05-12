@@ -143,6 +143,32 @@
       app.route('/reset/password')
          .post(Ctrl.changePassword);
 
+      
+      /**
+       * @swagger
+       * /reset/password:
+       *   post:
+       *     summary: Change password User
+       *     tags: [Users]
+       *     requestBody:
+       *       required: true
+       *       content:
+       *         application/json:
+       *           schema:
+       *             $ref: '#/components/schemas/Users'
+       *     responses:
+       *       200:
+       *         description: The user was successfully created
+       *         content:
+       *           application/json:
+       *             schema:
+       *               $ref: '#/components/schemas/Users'
+       *       500:
+       *         description: Some server error
+      */
+       app.route('/reset/password/phone')
+       .post(Ctrl.changePasswordCode);   
+
       /**
        * @swagger
        * /users/exist:

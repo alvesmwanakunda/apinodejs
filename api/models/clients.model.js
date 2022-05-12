@@ -17,6 +17,12 @@
             type:Date,
             required:false
         },
+
+        age:{
+            type:String,
+            required:false
+        },
+
         numeroClient:{
             type:String,
             required:true,
@@ -46,7 +52,7 @@
         entreprise:[{
             type: Schema.ObjectId,
             ref: "Entreprises",
-            required: true
+            required: false
         }],
         dateCreated:{
             type:Date,

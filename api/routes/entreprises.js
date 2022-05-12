@@ -63,9 +63,20 @@
          .get(Ctrl.getUserByEntreprise);
          
      app.route('/entreprise/:id([a-fA-F\\d]{24})')
-         .put(Ctrl.udpateEntreprise);
+         .put(Ctrl.udpateEntreprise)
+         .get(Ctrl.getEntrepriseByCategorie);
+
+    app.route('/entreprises')
+        .get(Ctrl.getEntrepriseByCategorie);
+        
+    app.route('/entreprises/visiter')
+        .get(Ctrl.getEntrepriseByUserVisiter);    
+
          
      app.put("/entreprise/image/:id([a-fA-F\\d]{24})", upload.single("uploadfile"),Ctrl.uploadLogo);
+
+     app.route('/entreprise/id/:id([a-fA-F\\d]{24})')
+        .get(Ctrl.getEntrepriseById);
 
 
     }

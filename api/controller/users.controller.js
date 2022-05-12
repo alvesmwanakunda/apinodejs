@@ -50,6 +50,7 @@
                         entreprise.nom = req.body.entreprise;
                         entreprise.createur = user._id;
                         entreprise.categorie = req.body.categorie;
+                        entreprise.creation = new Date();
                         
 
                         User.findOne(query, function(err, userexists){
@@ -294,8 +295,8 @@
                             count: 1,
                             charset: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                         });
-                        password = password[0];
-                        user.password = crypto.createHash('md5').update(password).digest("hex");
+                        //password = password[0];
+                        //user.password = crypto.createHash('md5').update(password).digest("hex");
 
                         user.save(function(err,user){
                             if(err)
@@ -317,6 +318,37 @@
             changePassword:function(req,res){
                 User.findOne({
                     email:req.body.email,
+                    code: req.body.code
+                }, function(err, user){
+                    if(err)
+                      return res.status(500).json({
+                          success:false,
+                          message: err
+                      });
+                    if(!user){
+                        return res.json({
+                            success: false,
+                            message: "notFound"
+                        });
+                    }
+                    user.code = "";
+                    user.password = crypto.createHash('md5').update(req.body.password).digest("hex");
+                    user.save(function(err,user){
+                        if(err)
+                          return res.status(500).json({
+                              success:false,
+                              message: err
+                          });
+                        res.json({
+                            success:true,
+                            message:user
+                        });
+                    });
+                });
+            },
+            changePasswordCode:function(req,res){
+                User.findOne({
+                    phone:req.body.phone,
                     code: req.body.code
                 }, function(err, user){
                     if(err)

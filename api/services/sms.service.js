@@ -30,23 +30,30 @@ module.exports = {
               
         });
     },
-    reset:(user, code, password)=>{
+    reset:(user, code)=>{
         return new Promise((resolve, reject)=>{
 
-                let indicatif = "+221";
+             try {
 
-                var twilioclient = new twilio(process.env.accountSid, process.env.authToken);
-                twilioclient.messages.create({
-                    body: 'Bienvenue sur WEFID, voici votre code de validation : ' + code + '\n\nVotre nouveau mot de passe WEFID.  est :' + password,
-                    to: indicatif + user.phone,
-                    from: process.env.twiliofrom
-                  })
-                  .then((message) => {
-                    resolve(message);
-                  }).catch((err) => {
-                    console.log(err);
-                    reject(err);
-                  });
+              let indicatif = "+221";
+
+              var twilioclient = new twilio(process.env.accountSid, process.env.authToken);
+              twilioclient.messages.create({
+                  body: 'Bienvenue sur WEFID, Une demande a été faite pour réinitialiser le mot de passe de votre compte associé à ce numéro sur wefid \n\n Code de validation : ' + code,
+                  to: indicatif + user.phone,
+                  from: process.env.twiliofrom
+                })
+                .then((message) => {
+                  resolve(message);
+                }).catch((err) => {
+                  console.log(err);
+                
+                });
+             } catch (error) {
+              reject(error);
+             }
+
+               
         });
     }
     

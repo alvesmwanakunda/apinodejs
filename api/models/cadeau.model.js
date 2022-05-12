@@ -11,6 +11,16 @@
             required:false
         },
 
+        nombreLivraison:{
+            type:Number,
+            required:false
+        },
+
+        typeCadeau:{
+            type:String,
+            required:false
+        },
+
         typesPoint:{
             type: Schema.ObjectId,
             ref: "TypesPoint",
@@ -20,7 +30,7 @@
         produit:{
             type: Schema.ObjectId,
             ref: "Produits",
-            required: true
+            required: false,
         },
 
         entreprise:{
@@ -42,8 +52,28 @@
         dateFin:{
             type:Date,
             required:false
-        }
+        },
+        client:[{
+            
+            type: Schema.ObjectId,
+            ref: "Users",
+            required: false 
+        }],
 
+        montant:{
+            type:String,
+            required:false
+        },
+
+        facture:{
+            type:Boolean,
+            default:false,
+            required:false
+        },
+        devise:{
+            type:String,
+            required:false
+        }
 
     });
     module.exports={

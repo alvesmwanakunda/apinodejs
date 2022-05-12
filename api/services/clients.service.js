@@ -47,11 +47,13 @@ module.exports = {
 
         return new Promise((resolve, reject)=>{
 
-                  let indicatif = "+221";
+            try {
+
+                let indicatif = "+221";
                   var twilioclient = new twilio(process.env.accountSid, process.env.authToken);
 
                   twilioclient.messages.create({
-                      body: 'Voici votre code de validation wefid : ' + user.code +'.Votre mot de passe temporaire est : ' +password,
+                      body: 'Bonjour, \n\n Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur,Wefid. \n\n Votre identifiant de connexion est le suivant: ' + user.phone +'.\n\n Votre mot de passe temporaire est : ' +password,
                       to: indicatif + user.phone,
                       from: process.env.twiliofrom
                     })
@@ -59,8 +61,42 @@ module.exports = {
                       resolve(message);  
                     }).catch((err) => {
                       console.log(err);
-                      reject(err);
                     });
+                
+            } catch (error) {
+                reject(error);
+            }
+
+                  
+        });
+
+    },
+
+    inscriptionSmsPhone:(user)=>{
+
+        return new Promise((resolve, reject)=>{
+
+            try {
+
+                let indicatif = "+221";
+                  var twilioclient = new twilio(process.env.accountSid, process.env.authToken);
+
+                  twilioclient.messages.create({
+                      body: 'Bonjour,Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur, Wefid. \n\n Votre identifiant de connexion est le suivant: ' +user.phone,
+                      to: indicatif + user.phone,
+                      from: process.env.twiliofrom
+                    })
+                    .then((message) => {
+                      resolve(message);  
+                    }).catch((err) => {
+                      console.log(err);
+                    });
+                
+            } catch (error) {
+                reject(error);
+            }
+
+                  
         });
 
     },

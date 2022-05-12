@@ -31,6 +31,11 @@
             required:false,
             default:0
         },
+        montantAchat:{
+            type:Number,
+            required:false,
+            default:0
+        },
         avoir:{
             type:Number,
             required:false,
@@ -42,6 +47,11 @@
             default:0
         },
         point:{
+            type:Number,
+            required:false,
+            default:0
+        },
+        nombreVisite:{
             type:Number,
             required:false,
             default:0

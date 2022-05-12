@@ -72,6 +72,31 @@
          .post(Ctrl.createClient);
 
       /**
+       * @swagger
+       * /client:
+       *   post:
+       *     summary: Create client
+       *     tags: [Clients]
+       *     requestBody:
+       *       required: true
+       *       content:
+       *         application/json:
+       *           schema:
+       *             $ref: '#/components/schemas/Clients'
+       *     responses:
+       *       200:
+       *         description: successfully
+       *         content:
+       *           application/json:
+       *             schema:
+       *               $ref: '#/components/schemas/Clients'
+       *       500:
+       *         description: Some server error
+      */
+       app.route('/client')
+         .post(Ctrl.addClient);   
+
+      /**
      * @swagger
      * /clients/entreprise/idEntreprise:
      *   get:
