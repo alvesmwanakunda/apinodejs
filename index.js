@@ -66,7 +66,7 @@ if(process.env.NODE_ENV !=="production"){
 }
 
 const port = PARAMS.NODE_PORT || 5000; //Save the port number
-const MONGO_URL = process.env.DB_URL;
+const MONGO_URL = process.env.MONGODB_URI;
 
 var acl = new node_acl(new node_acl.memoryBackend());
 
