@@ -14,7 +14,7 @@
                         let cadeau = new Cadeau(req.body);
                         
                         if(!req.body.facture){
-                              reduction.facture=false;
+                            cadeau.facture=false;
                         }
 
                         cadeau.entreprise = req.params.id;
