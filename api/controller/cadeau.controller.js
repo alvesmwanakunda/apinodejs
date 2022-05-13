@@ -12,6 +12,11 @@
                     if(aclres){
 
                         let cadeau = new Cadeau(req.body);
+                        
+                        if(!req.body.facture){
+                              reduction.facture=false;
+                        }
+
                         cadeau.entreprise = req.params.id;
                         cadeau.typeCadeau = req.params.type;
                         cadeau.dateCreation = new Date();
