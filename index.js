@@ -65,7 +65,8 @@ if(process.env.NODE_ENV !=="production"){
   require("dotenv").config();
 }
 
-const port = PARAMS.NODE_PORT || 5000; //Save the port number
+const port = process.env.PORT || 5000; //Save the port number heroku
+//const port = process.env.API_PORT || 5000; //Save the port number
 const MONGO_URL = process.env.MONGODB_URI;
 
 var acl = new node_acl(new node_acl.memoryBackend());
