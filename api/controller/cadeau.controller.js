@@ -16,6 +16,10 @@
                         if(!req.body.facture){
                             cadeau.facture=false;
                         }
+                        if(!req.body.produit){
+                            cadeau.produit=null;
+                            cadeau.facture = req.body.facture;
+                          }
 
                         cadeau.entreprise = req.params.id;
                         cadeau.typeCadeau = req.params.type;
