@@ -8,6 +8,7 @@ var Encaisse = require('../models/encaisse.model').EncaisseModel;
 var AvoirEncaisse = require('../models/avoirEncaisse.model').AvoirEncaisseModel;
 var AvoirDepense = require('../models/avoirDepense.model').AvoirDepenseModel;
 var Client = require('../models/clients.model').ClientsModel;
+var ListAvoir = require('../models/listAvoir.model').ListAvoirModel;
 
 module.exports ={
 
@@ -221,12 +222,14 @@ module.exports ={
 
     },
 
-    addAvoirEncaisse:(user,entreprise,montant)=>{
+    addAvoirEncaisse:(user,client,entreprise,montant)=>{
 
         return new Promise((resolve,reject)=>{
 
             let encaisse = new AvoirEncaisse();
+            let listAvoir = new ListAvoir();
             encaisse.user = new ObjectId(user);
+            encaisse.client = new ObjectId(client);
             encaisse.entreprise = new ObjectId(entreprise);
             encaisse.montant = montant;
             encaisse.creation = new Date();
@@ -239,6 +242,13 @@ module.exports ={
                        status: 'error'
                     });
                  }else{
+                    listAvoir.client = new ObjectId(client);
+                    listAvoir.entreprise = new ObjectId(entreprise);
+                    listAvoir.montant = montant;
+                    listAvoir.creation = new Date();
+                    listAvoir.idRef= new ObjectId(encaisse._id);
+                    listAvoir.type="Encaisse"; 
+                    listAvoir.save();
                     resolve({
                        encaisse: encaisse,
                        status: 'success'
@@ -250,16 +260,17 @@ module.exports ={
 
     },
 
-    addAvoirDepense:(user,entreprise,montant)=>{
+    addAvoirDepense:(user,client,entreprise,montant)=>{
 
         return new Promise((resolve,reject)=>{
 
             let depense = new AvoirDepense();
+            let listAvoir = new ListAvoir();
             depense.user = new ObjectId(user);
+            depense.client = new ObjectId(client);
             depense.entreprise = new ObjectId(entreprise);
             depense.montant = montant;
             depense.creation = new Date();
-
             depense.save(function(err,encaisse){
 
                 if(err){
@@ -268,6 +279,13 @@ module.exports ={
                        status: 'error'
                     });
                  }else{
+                    listAvoir.client = new ObjectId(client);
+                    listAvoir.entreprise = new ObjectId(entreprise);
+                    listAvoir.montant = montant;
+                    listAvoir.creation = new Date();
+                    listAvoir.idRef= new ObjectId(depense._id);
+                    listAvoir.type="Depense"; 
+                    listAvoir.save(); 
                     resolve({
                        encaisse: encaisse,
                        status: 'success'
@@ -283,6 +301,26 @@ module.exports ={
         return new Promise(async(resolve, reject)=>{
 
             let encaisse = await AvoirEncaisse.findOne({_id:idAvoir});
+
+            encaisse.delete(function(err, operation){
+
+                if(err){
+                    reject(err);
+                }else{
+                    resolve({
+                    body: operation,
+                    status: 'success'
+                    });    
+                }
+            })
+
+        })
+    },
+
+    deletelistAvoirEncaisse:(idAvoir, entreprise)=>{
+        return new Promise(async(resolve, reject)=>{
+
+            let encaisse = await ListAvoir.findOne({idRef:idAvoir, entreprise:entreprise});
 
             encaisse.delete(function(err, operation){
 

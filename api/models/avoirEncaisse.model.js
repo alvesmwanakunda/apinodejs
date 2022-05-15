@@ -16,6 +16,11 @@
             ref: "Users",
             required: true
         },
+        client:{
+            type: Schema.ObjectId,
+            ref: "Clients",
+            required: true
+        },
         montant:{
             type:Number,
             required:false
