@@ -259,6 +259,12 @@
       app.route('/user')
          .get(Ctrl.getUser)
          .put(Ctrl.updateProfil); 
+
+      // agent 
+      
+      app.route('/agent/:id([a-fA-F\\d]{24})')
+         .get(Ctrl.getAgent)
+         .put(Ctrl.updateProfilAgent);
   }
   
 })();

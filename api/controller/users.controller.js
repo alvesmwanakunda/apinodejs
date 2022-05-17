@@ -720,7 +720,74 @@
                     }
                 })
 
+            },
+
+            getAgent:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+                    if(aclres){
+
+                        User.findOne({_id:req.params.id}, function(err, user){
+
+                           if(err)
+                            return res.status(500).json({
+                                success:false,
+                                message: err
+                            });
+                          res.json({
+                              success:true,
+                              message:user
+                          });
+
+                        });
+
+                    }else{
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+                    }
+                })
+
+            },
+            
+            updateProfilAgent:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+                    if(aclres){
+
+                        //console.log("Agent", req.params.id);
+
+                        let user = await User.findOne({_id:req.params.id});
+                        //console.log("Body", req.body);
+
+                        user.nom = req.body.nom,
+                        user.prenom = req.body.prenom,
+                        user.poste = req.body.poste,
+
+                        User.findOneAndUpdate({_id:req.params.id},user,{new:true},function(err, user){
+                           if(err)
+                            return res.status(500).json({
+                                success:false,
+                                message: err
+                            });
+                          res.json({
+                              success:true,
+                              message:user
+                          });
+
+                        });
+
+                    }else{
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+                    }
+                })
+
             }
+
             
         };
      };
