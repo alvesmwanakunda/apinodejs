@@ -116,7 +116,8 @@ module.exports ={
             cadeau.creation = new Date();
             cadeau.client = new ObjectId(client);
             cadeau.cadeau = new ObjectId(idCadeau);
-            cadeau.entreprise = new ObjectId(entreprise)
+            cadeau.entreprise = new ObjectId(entreprise),
+            cadeau.nombre = 1;
 
             cadeau.save(function(err,cadeau){
 
@@ -133,6 +134,34 @@ module.exports ={
              }
             })
         })
+    },
+
+    updateCadeauClient:(id)=>{
+
+        return new Promise(async(resolve,reject)=>{
+
+          let cadeau = await CadeauClient.findOne({_id:id});
+          cadeau.nombre = parseInt(cadeau.nombre) + parseInt(1);
+
+          try {
+
+            CadeauClient.findOneAndUpdate({_id:new ObjectId(id)},cadeau,{new:true}, function(err,data){
+                if(err){
+                    console.log("Erreur", err);
+                }else{
+                  resolve({
+                     body: data,
+                     status: 'success'
+                  });
+                }
+            });
+              
+          } catch (error) {
+            reject(error);
+          }
+
+        })
+
     },
 
     addUserCadeau:(idCadeau,user)=>{

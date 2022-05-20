@@ -282,7 +282,7 @@
 
                           if(operation){
 
-                            Cadeau.find({entreprise:req.params.id,point:{$lte:operation.point},client:{$ne:req.decoded.id}},function(error, cadeau){
+                            Cadeau.find({entreprise:req.params.id,point:{$lte:operation.point}},function(error, cadeau){
 
                                 if(error){
                                     res.status(500).json({
@@ -380,7 +380,55 @@
                     }
                 })
 
-            }
+            },
+
+            // Detail web recompense 
+
+            listCadeauWebByUserByEntrepriseByVisite(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                          let operation = await Operation.findOne({user:req.params.id,entreprise:req.params.idEntreprise});
+                          //client:{$ne:req.decoded.id}
+                          //console.log("Operation", operation);
+
+                          if(operation){
+
+                            Cadeau.find({entreprise:req.params.idEntreprise,point:{$lte:operation.point},client:{$ne:req.params.id}},function(error, cadeau){
+
+                                if(error){
+                                    res.status(500).json({
+                                        success:false,
+                                        cadeau:err
+                                    })
+    
+                                }else{
+                                    res.status(200).json({
+                                        success:true,
+                                        cadeau: cadeau
+                                    })
+                                }
+                              }).populate('typesPoint').populate('produit');
+
+                          }else{
+                            res.status(200).json({
+                                success:true,
+                                cadeau: []
+                            })
+                          }
+
+                          
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        }); 
+                    }
+                })
+
+            },
 
             //Post.aggregate([{$match: {postId: 5}}, {$project: {upvotes: {$size: '$upvotes'}}}])
 

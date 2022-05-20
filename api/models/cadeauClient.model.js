@@ -22,6 +22,11 @@
             required: true
         },
 
+        nombre:{
+            type:Number,
+            required:false,
+            default:0
+        },
         creation:{
             type:Date,
             required:true

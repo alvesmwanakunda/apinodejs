@@ -364,10 +364,13 @@
                         let cadeau = await Cadeau.findOne({_id:new ObjectId(req.params.cadeau)}).populate("typesPoint");
                         let entreprise = await Entreprises.findOne({_id:new ObjectId(req.params.entreprise)});
 
+
                         //console.log("Cadeau", cadeau.entreprise);
                         //console.log("Entreprise", entreprise._id);
 
                         if(cadeau.entreprise.equals(entreprise._id)){
+
+                            let cadeauList= await CadeauClient.findOne({client:new ObjectId(operation.client),cadeau:new ObjectId(req.params.cadeau)})
 
                             if(cadeau.typesPoint.nom=="Visites"){
 
@@ -387,8 +390,12 @@
                                     })
                                 }else{
 
-                                    operationService.addCadeauClient(operation.client,cadeau._id,req.params.entreprise);
-                                    operationService.addUserCadeau(cadeau._id,req.params.id);
+                                    if(cadeauList){
+                                         operationService.updateCadeauClient(cadeauList._id);
+                                    }else{
+                                        operationService.addCadeauClient(operation.client,cadeau._id,req.params.entreprise);
+                                        operationService.addUserCadeau(cadeau._id,req.params.id);
+                                    }
                                     operationService.addDepense(req.params.id,req.params.entreprise,cadeau.produit,cadeau.point);
 
                                     res.status(200).json({
@@ -714,7 +721,7 @@
                             if(err){
                                 res.status(500).json({
                                     success:false,
-                                    message:error
+                                    message:err
                                 })
                             }else{
                                 res.status(200).json({
@@ -733,6 +740,129 @@
                 })
 
             },
+
+            // List operation cadeau web
+
+            detailListDepenseCadeau:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        CadeauClient.find({cadeau:new ObjectId(req.params.id)},function(err,cadeau){
+
+                            if(err){
+                                console.log("Erreur", err);
+                                res.status(500).json({
+                                    success:false,
+                                    message:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    message:cadeau,
+                                })
+                            }
+
+                        }).populate('cadeau').populate({path:'client', populate:{path:'user',select: 'nom prenom'}})
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+                })
+
+            },
+
+            countNombreCadeau:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        CadeauClient.aggregate([
+                            {$match:{cadeau:new ObjectId(req.params.id)}},
+                            {$group: {_id:null, nombre:{$sum:"$nombre"}}}
+                        ],function(err,cadeau){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    cadeau:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    cadeau: cadeau
+                                })
+                            }
+
+                        })
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+                })
+
+            },
+
+            countPointCadeau:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        let cadeau = await Cadeau.findOne({_id:req.params.id});
+                        var nombre;
+                       
+                        CadeauClient.aggregate([
+                            {$match:{cadeau:new ObjectId(req.params.id)}},
+                            {$group: {_id:null, nombre:{$sum:"$nombre"}}}
+                        ],function(err,cadeauClient){
+
+                            console.log("Number", cadeauClient);
+
+                            if(!cadeauClient[0]?.nombre){
+                                nombre = 0;
+                            }else{ 
+                              nombre = parseInt(cadeauClient[0].nombre * cadeau.point); 
+                            }
+
+                            //console.log("Nombre", nombre);
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    cadeau:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    cadeau: cadeauClient,
+                                    nombre:nombre,
+                                })
+                            }
+
+                        })
+
+
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+                })
+
+            },
+
+            //Fin
 
             listDepense:function(req,res){
 
