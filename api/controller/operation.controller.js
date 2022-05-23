@@ -741,6 +741,37 @@
 
             },
 
+            listCadeauWebEntreprise:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        CadeauClient.find({entreprise:req.params.id},function(err, cadeau){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    message:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    message:cadeau,
+                                })
+                            }
+                        }).populate('cadeau').populate({path:'client', populate:{path:'user',select: 'nom prenom'}});
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+                })
+
+            },
+
             // List operation cadeau web
 
             detailListDepenseCadeau:function(req,res){

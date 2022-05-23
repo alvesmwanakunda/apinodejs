@@ -28,6 +28,9 @@
         app.route('/operation/cadeau/client/:id([a-fA-F\\d]{24})')
           .get(Ctrl.listCadeauEntreprise);
 
+        app.route('/web/operation/cadeau/client/:id([a-fA-F\\d]{24})')
+          .get(Ctrl.listCadeauWebEntreprise);  
+
         app.route('/list/detail/cadeau/:id([a-fA-F\\d]{24})')  
            .get(Ctrl.detailListDepenseCadeau)
 

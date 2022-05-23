@@ -15,6 +15,9 @@
      const clientService = require('../services/clients.service');
      const userService = require('../services/users.service');
      var Isemail = require('isemail');
+     var connexionService= require('../services/connexion.service');
+     var ObjectId = require('mongoose').Types.ObjectId;
+
 
 
      module.exports = function(acl){
@@ -180,8 +183,10 @@
 
                   //console.log("Query", query);
 
-                  User.findOne(query).exec(function(err, user){
+                  User.findOne(query).exec(async function(err, user){
 
+                      //console.log("User", user);
+                      //console.log("Entreprise", entreprise);
                       //console.log("User", user);
                       
                       if(err)
@@ -203,12 +208,18 @@
 
                       Role.findOne({
                           roles:user.role
-                      }, function(err, role){
+                      }, async function(err, role){
                           if(err)
                             return res,send({
                                 success: false,
                                 message: err
                             });
+                          if(user.role=="agent"){
+                              let entreprise = await Entreprise.findOne({createur:new ObjectId(user._id)});
+                              if(entreprise){
+                                connexionService.addConnexion(user._id,entreprise._id);
+                              }  
+                          }  
                           res.json({
                               success: true,
                               message:{

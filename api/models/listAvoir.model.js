@@ -28,6 +28,10 @@
             type:String,
             required:false
         },
+        motif:{
+            type:String,
+            required:false
+        },
         idRef:{
             type: Schema.ObjectId,
             required: false
