@@ -38,12 +38,13 @@
 
                     if(aclres){
 
-                        let connexion = await Connexion.findOne({user:req.decoded.id},{sort:{'connexion':-1}});
+                        let connexion = await Connexion.findOne({user:req.decoded.id}).sort({connexion:-1});
+
                         console.log("Last connexion", connexion);
                         connexion.deconnexion = new Date();
 
                         //{_id:req.decoded.id},user,{new:true}
-                        Connexion.findOneAndUpdate({user:req.decoded.id},connexion,{new:true},function(error, connexion){
+                        Connexion.findOneAndUpdate({_id:connexion._id},connexion,{new:true},function(error, connexion){
                             if(error){
 
                                 return res.status(500).json({
@@ -72,6 +73,9 @@
                 acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
 
                     if(aclres){
+
+                    
+
                         Connexion.find({entreprise:req.params.id},function(err, connexion){
 
                             if(err){
