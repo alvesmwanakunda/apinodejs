@@ -278,7 +278,7 @@
 
                           let operation = await Operation.findOne({user:req.decoded.id,entreprise:req.params.id});
                           //client:{$ne:req.decoded.id}
-                          console.log("Operation", operation);
+                          //console.log("Operation", operation);
 
                           if(operation){
 

@@ -228,7 +228,7 @@
                         let client = await Client.findOne({user:req.params.id});
 
 
-                        console.log("Montant", req.body.montant);
+                        //console.log("Montant", req.body.montant);
 
                         if(operation){
 
@@ -856,7 +856,7 @@
                             {$group: {_id:null, nombre:{$sum:"$nombre"}}}
                         ],function(err,cadeauClient){
 
-                            console.log("Number", cadeauClient);
+                            //console.log("Number", cadeauClient);
 
                             if(!cadeauClient[0]?.nombre){
                                 nombre = 0;
@@ -964,7 +964,26 @@
 
                     if(aclres){
 
-                        let depense = Depense.find({entreprise: req.params.id,user:req.decoded.id});
+                        Depense.aggregate([
+                            {$match:{$and:[{entreprise:new ObjectId(req.params.id)},{user:new ObjectId(req.decoded.id)}]}},
+                            {$group: {_id:null, point:{$sum:"$point"}}}
+                        ],function(err,operation){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    depense:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    depense: operation
+                                })
+                            }
+
+                        })
+
+                        /*let depense = Depense.find({entreprise: req.params.id,user:req.decoded.id});
 
                         depense.count(function(err, count){
 
@@ -980,7 +999,7 @@
                                     depense: count
                                 })
                             }
-                        })
+                        })*/
 
                     }else{
                         return res.status(401).json({
@@ -998,7 +1017,26 @@
 
                     if(aclres){
 
-                        let encaisse = Encaisse.find({entreprise: req.params.id,user:req.decoded.id});
+                        Encaisse.aggregate([
+                            {$match:{$and:[{entreprise:new ObjectId(req.params.id)},{user:new ObjectId(req.decoded.id)}]}},
+                            {$group: {_id:null, point:{$sum:"$point"}}}
+                        ],function(err,operation){
+
+                            if(err){ 
+                                res.status(500).json({
+                                    success:false,
+                                    encaisse:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    encaisse: operation
+                                })
+                            }
+
+                        })
+
+                        /*let encaisse = Encaisse.find({entreprise: req.params.id,user:req.decoded.id});
 
                         encaisse.count(function(err, count){
 
@@ -1014,7 +1052,7 @@
                                     encaisse: count
                                 })
                             }
-                        })
+                        })*/
 
                     }else{
                         return res.status(401).json({
