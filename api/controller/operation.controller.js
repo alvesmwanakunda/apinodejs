@@ -1064,6 +1064,59 @@
                 
             },
 
+            lengthEncaisseOperation:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        Operation.aggregate([
+                            {$match:{$and:[{entreprise:new ObjectId(req.params.id)},{user:new ObjectId(req.decoded.id)}]}},
+                            {$group: {_id:null, point:{$sum:"$point"}}}
+                        ],function(err,operation){
+
+                            if(err){ 
+                                res.status(500).json({
+                                    success:false,
+                                    encaisse:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    encaisse: operation
+                                })
+                            }
+
+                        })
+
+                        /*let encaisse = Encaisse.find({entreprise: req.params.id,user:req.decoded.id});
+
+                        encaisse.count(function(err, count){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    encaisse:err
+                                })
+    
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    encaisse: count
+                                })
+                            }
+                        })*/
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });  
+                    }
+                })
+                
+            },
+
             //length point entreprise
 
             lengthPointByEntreprise:function(req,res){

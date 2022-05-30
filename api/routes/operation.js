@@ -52,6 +52,8 @@
         app.route('/encaisse/length/:id([a-fA-F\\d]{24})') 
           .get(Ctrl.lengthEncaisse);
           
+        app.route('/operation/encaisse/length/:id([a-fA-F\\d]{24})') 
+          .get(Ctrl.lengthEncaisseOperation);  
         //Route avoir
         
         app.route('/operation/avoir/:id([a-fA-F\\d]{24})/:entreprise([a-fA-F\\d]{24})')
