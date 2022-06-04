@@ -70,7 +70,10 @@
         .get(Ctrl.getEntrepriseByCategorie);
         
     app.route('/entreprises/visiter')
-        .get(Ctrl.getEntrepriseByUserVisiter);    
+        .get(Ctrl.getEntrepriseByUserVisiter);
+        
+    app.route('/visiter/entreprise/id/:id([a-fA-F\\d]{24})')
+        .get(Ctrl.getEntrepriseByIdVisiteur);    
 
          
      app.put("/entreprise/image/:id([a-fA-F\\d]{24})", upload.single("uploadfile"),Ctrl.uploadLogo);

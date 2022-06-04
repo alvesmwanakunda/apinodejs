@@ -187,6 +187,26 @@
                         }).limit(5)
             },
 
+            getEntrepriseByIdVisiteur(req,res){
+
+                Entreprise.findOne({_id:req.params.id},function(err, entreprise){
+
+                    if(err){
+
+                        res.status(500).json({
+                            success:false,
+                            message:error
+                        })
+
+                    }else{
+                        res.status(200).json({
+                            success:true,
+                            message: entreprise
+                        })
+                    }
+                })
+            },
+
             getEntrepriseById(req,res){
 
                 acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
