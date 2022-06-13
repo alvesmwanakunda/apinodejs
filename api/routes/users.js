@@ -258,8 +258,11 @@
 
       app.route('/user')
          .get(Ctrl.getUser)
-         .put(Ctrl.updateProfil); 
-
+         .put(Ctrl.updateProfil);
+         
+      app.route('/user/client')
+         .get(Ctrl.getUserClient);
+   
       // agent 
       
       app.route('/agent/:id([a-fA-F\\d]{24})')

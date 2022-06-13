@@ -198,6 +198,35 @@ module.exports = {
             });
 
         })
+    },
+    updateClient:(user,genre,adresse,age)=>{
+
+        return new Promise(async(resolve,reject)=>{
+
+            let client = await Client.findOne({user:new ObjectId(user)});
+            try {
+
+                client.genre = genre;
+                client.adresse = adresse;
+                client.age = age;
+
+                Client.findOneAndUpdate({_id:client._id},client,{new:true},function(err, user){
+                    if(err){
+                       console.log("Erreur update client", err)
+                    }else{
+                        resolve({
+                            body: user,
+                            status: 'success'
+                         });
+                    } 
+                 });
+            } catch (error) {
+                reject(error);
+            }
+
+
+
+        });
     }
 
 

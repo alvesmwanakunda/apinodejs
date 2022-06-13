@@ -2,6 +2,7 @@
     'use strict';
      var User = require('../models/users.model').UserModel;
      var Entreprise = require('../models/entreprises.model').EntrepriseModel;
+     var Client = require('../models/clients.model').ClientsModel;
      var crypto  = require('crypto');
      var jwt = require('jsonwebtoken');
      var Encryption = require('../../utils/Encryption');
@@ -711,16 +712,21 @@
                         user.prenom = req.body.prenom,
 
                         User.findOneAndUpdate({_id:req.decoded.id},user,{new:true},function(err, user){
-                           if(err)
+                           if(err){
                             return res.status(500).json({
                                 success:false,
                                 message: err
                             });
-                          res.json({
-                              success:true,
-                              message:user
-                          });
-
+                           }
+                           else{
+                            res.json({
+                                success:true,
+                                message:user
+                            });
+                            if(user.role=="user"){
+                                clientService.updateClient(req.decoded.id,req.body.genre,req.body.adresse,req.body.age);
+                            }
+                           }
                         });
 
                     }else{
@@ -732,6 +738,37 @@
                 })
 
             },
+
+            getUserClient:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+                    if(aclres){
+
+                        Client.findOne({user:req.decoded.id}, function(err, user){
+
+                           if(err)
+                            return res.status(500).json({
+                                success:false,
+                                message: err
+                            });
+                          res.json({
+                              success:true,
+                              message:user
+                          });
+
+                        }).populate("user");
+
+                    }else{
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+                    }
+                })
+
+            },
+
+
 
             getAgent:function(req,res){
 
