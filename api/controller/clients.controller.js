@@ -200,6 +200,12 @@
                         client.genre = req.body.genre;
                         client.adresse = req.body.adresse;
                         client.dateNaissance = req.body.age;
+
+                        if(req.body.age){
+                            //console.log("Date naissance", req.body.age);
+                            client.day = new Date(req.body.age).getDate();
+                            client.month = new Date(req.body.age).getMonth()+1;
+                        }
                         client.dateCreated = new Date();
                         client.user = user._id;
                         //client.entreprise = req.params.id

@@ -15,6 +15,8 @@
     var operationService = require('../services/operation.service');
     var ObjectId = require('mongoose').Types.ObjectId;
     var ListAvoir = require('../models/listAvoir.model').ListAvoirModel;
+    var MessageClient = require('../models/messageClient.model').MessageClientModel;
+    var messageAppService = require('../services/messageApp.service');
 
 
     module.exports = function(acl,app){
@@ -145,6 +147,8 @@
                         let pointVisite = await PointVisite.findOne({entreprise:req.params.entreprise});
                         let client = await Client.findOne({user:req.params.id});
                         let type="Visites";
+                        let messageClient = await MessageClient.findOne({entreprise:req.params.entreprise, etat:"Envoyer",type:"Visite",automatique:true});
+
 
                         if(operation){
 
@@ -160,6 +164,9 @@
                                         message:error
                                     })
                                 }else{
+                                    if(messageClient){
+                                       messageAppService.createMessageVisite(messageClient._id,client._id);
+                                    }
                                     operationService.addEncaisse(req.params.id,req.params.entreprise,pointVisite.point,type);
                                     res.status(200).json({
                                         success:true,
@@ -190,6 +197,9 @@
                                         message:error
                                     })
                                 }else{
+                                    if(messageClient){
+                                        messageAppService.createMessageVisite(messageClient._id,client._id);
+                                     }
                                     operationService.addEncaisse(req.params.id,req.params.entreprise,pointVisite.point,type);
                                     res.status(200).json({
                                         success:true,

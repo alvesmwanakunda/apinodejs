@@ -35,7 +35,21 @@
         visite:{
             type:Number,
             required:false
+        },
+        automatique:{
+            type:Boolean,
+            default:false,
+            required:false
+        },
+        dateCreated:{
+            type:Date,
+            required:false
+        },
+        etat:{
+            type:String,
+            required:false
         }
+
     });
     module.exports={
         MessageClientSchema : messageClientSchema,

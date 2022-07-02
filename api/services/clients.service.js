@@ -204,11 +204,20 @@ module.exports = {
         return new Promise(async(resolve,reject)=>{
 
             let client = await Client.findOne({user:new ObjectId(user)});
+            console.log("Age", age);
             try {
 
                 client.genre = genre;
                 client.adresse = adresse;
-                client.age = age;
+                client.dateNaissance = age;
+
+                if(age){
+                    //console.log("Date naissance", req.body.age);
+                    client.day = new Date(age).getDate();
+                    client.month = new Date(age).getMonth()+1;
+                }
+
+
 
                 Client.findOneAndUpdate({_id:client._id},client,{new:true},function(err, user){
                     if(err){

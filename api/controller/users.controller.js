@@ -710,6 +710,7 @@
 
                         user.nom = req.body.nom,
                         user.prenom = req.body.prenom,
+                        //console.log("Date naissance", req.body.age);
 
                         User.findOneAndUpdate({_id:req.decoded.id},user,{new:true},function(err, user){
                            if(err){
