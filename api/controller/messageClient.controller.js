@@ -211,23 +211,27 @@
                                     message.photo = data;
                                     message.save(function(err, message){
 
-                                        if(err)
+                                        if(err){
                                             return res.status(500).json({
                                                 success: false,
                                                 message: err
                                             });
+                                        }else{
 
-                                        fs.unlink(path, (err)=>{
-                                            if(err){
-                                                console.error(err)
-                                                return
-                                            }
-                                        })    
-            
-                                        res.json({
-                                            success: true,
-                                            message:message
-                                        });     
+                                            fs.unlink(path, (err)=>{
+                                                if(err){
+                                                    console.error(err)
+                                                    return
+                                                }
+                                            })    
+                
+                                            res.json({
+                                                success: true,
+                                                message:message
+                                            });  
+
+                                        }
+                                               
                                     })
                                     
                                 });
@@ -411,6 +415,14 @@
                                                     message:err
                                                 })
                                             }else{
+
+                                                fs.unlink(path, (err)=>{
+                                                    if(err){
+                                                        console.error(err)
+                                                        return
+                                                    }
+                                                });
+
                                                 res.status(200).json({
                                                     success:true,
                                                     message: message
