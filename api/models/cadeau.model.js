@@ -73,8 +73,12 @@
         devise:{
             type:String,
             required:false
+        },
+        isCode:{
+           type:Boolean,
+           default:false,
+           required:false
         }
-
     });
     module.exports={
         CadeauSchema : cadeauSchema,

@@ -402,9 +402,11 @@
 
                                     if(cadeauList){
                                          operationService.updateCadeauClient(cadeauList._id);
+                                         operationService.updateCadeau(cadeau._id);
                                     }else{
                                         operationService.addCadeauClient(operation.client,cadeau._id,req.params.entreprise);
                                         operationService.addUserCadeau(cadeau._id,req.params.id);
+                                        operationService.updateCadeau(cadeau._id);
                                     }
                                     operationService.addDepense(req.params.id,req.params.entreprise,cadeau.produit,cadeau.point);
 
@@ -1563,6 +1565,7 @@
 
             },
 
+           
 
 
         }

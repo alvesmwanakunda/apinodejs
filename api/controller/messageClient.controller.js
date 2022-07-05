@@ -6,6 +6,8 @@
     var Client = require('../models/clients.model').ClientsModel;
     var fs = require("fs");
     var MessageAppService = require('../services/messageApp.service');
+    var Entreprise = require('../models/entreprises.model').EntrepriseModel;
+    var Codes = require('voucher-code-generator');
 
 
     module.exports = function(acl,app){
@@ -65,6 +67,14 @@
 
                     if(aclres){
 
+                        let entreprise = await Entreprise.findOne({_id:req.params.id});
+                        var code = Codes.generate({
+                            length: 5,
+                            count: 1,
+                            charset: "0123456789"
+                        });
+                        code = code[0];
+
                         var message = new MessageClient(req.body);
                         message.entreprise = req.params.id;
                         let client = req.params.client;
@@ -73,6 +83,12 @@
                             message.automatique = req.body.automatique;
                         }else{
                             message.automatique = false; 
+                        }
+                        if(req.body.isCode){
+                           message.isCode = req.body.isCode;
+                           message.code = entreprise.nom+""+code;
+                        }else{
+                           message.isCode = false;
                         }
 
                         if(req.file){
@@ -157,6 +173,14 @@
 
                     if(aclres){
 
+                        let entreprise = await Entreprise.findOne({_id:req.params.id});
+                        var code = Codes.generate({
+                            length: 5,
+                            count: 1,
+                            charset: "0123456789"
+                        });
+                        code = code[0];
+
                         var message = new MessageClient(req.body);
                         message.entreprise = req.params.id;
                         message.dateCreated = new Date();
@@ -165,6 +189,12 @@
                         }else{
                             message.automatique = false; 
                         }
+                        if(req.body.isCode){
+                            message.isCode = req.body.isCode;
+                            message.code = entreprise.nom+""+code;
+                         }else{
+                            message.isCode = false;
+                         }
 
                         if(req.file){
 
@@ -341,6 +371,13 @@
                     if(aclres){
 
                         let message = await MessageClient.findOne({_id:req.params.id});
+                        let entreprise = await Entreprise.findOne({_id:message.entreprise});
+                        var code = Codes.generate({
+                            length: 5,
+                            count: 1,
+                            charset: "0123456789"
+                        });
+                        code = code[0];
 
                         try {
 
@@ -349,6 +386,10 @@
                             message.message = req.body.message;
                             message.visite = req.body.visite;
                             message.automatique = req.body.automatique;
+                            message.isCode = req.body.isCode;
+                            if(!message.code && req.body.isCode){
+                                message.code = entreprise.nom+""+code;
+                            }
 
                             if(req.file){
                                 try {
@@ -363,7 +404,7 @@
                                         
                                         message.photo = data;
 
-                                        Message.findOneAndUpdate({_id:req.params.id}, message,{ new: true },function(err, message){
+                                        MessageClient.findOneAndUpdate({_id:req.params.id}, message,{ new: true },function(err, message){
                                             if(err){
                                                 res.status(500).json({
                                                     success:false,

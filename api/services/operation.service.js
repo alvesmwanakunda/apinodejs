@@ -164,6 +164,37 @@ module.exports ={
 
     },
 
+    updateCadeau:(id)=>{
+
+        return new Promise(async(resolve,reject)=>{
+
+          let cadeau = await Cadeau.findOne({_id:id});
+
+          if(!cadeau.isCode){
+
+            cadeau.isCode = true;
+            try {
+
+                Cadeau.findOneAndUpdate({_id:new ObjectId(id)},cadeau,{new:true}, function(err,data){
+                    if(err){
+                        console.log("Erreur", err);
+                    }else{
+                      resolve({
+                         body: data,
+                         status: 'success'
+                      });
+                    }
+                });
+                  
+              } catch (error) {
+                reject(error);
+              }
+
+          }
+        })
+
+    },
+
     addUserCadeau:(idCadeau,user)=>{
 
         return new Promise(async(resolve,reject)=>{

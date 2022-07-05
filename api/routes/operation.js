@@ -118,6 +118,8 @@
             .get(Ctrl.getClientByAvoirDepense) 
             
           app.route('/get/client/avoir/encaisse/:id([a-fA-F\\d]{24})')
-            .get(Ctrl.getClientByAvoirEncaisse)  
+            .get(Ctrl.getClientByAvoirEncaisse) 
+            
+           
     }
 })();

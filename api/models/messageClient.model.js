@@ -48,6 +48,15 @@
         etat:{
             type:String,
             required:false
+        },
+        isCode:{
+            type:Boolean,
+            default:false,
+            required:false
+        },
+        code:{
+            type:String,
+            required:false
         }
 
     });

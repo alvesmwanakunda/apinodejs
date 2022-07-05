@@ -21,8 +21,8 @@
         app.route('/cadeau/visite/:id([a-fA-F\\d]{24})') 
             .get(Ctrl.listCadeauByUserByEntrepriseByVisite);
 
-        app.route('/cadeau/visite/:id([a-fA-F\\d]{24})/:idEntreprise([a-fA-F\\d]{24})') 
-            .get(Ctrl.listCadeauWebByUserByEntrepriseByVisite);    
+        app.route('/cadeau/visite/:id([a-fA-F\\d]{24})/:entreprise([a-fA-F\\d]{24})') 
+            .get(Ctrl.listCadeauClient);    
          
         app.route('/cadeau/achat/:id([a-fA-F\\d]{24})') 
             .get(Ctrl.listCadeauByUserByEntrepriseByAchat);

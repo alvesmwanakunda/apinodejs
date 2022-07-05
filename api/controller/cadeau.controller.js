@@ -3,6 +3,8 @@
     'use strict';
     var Cadeau = require('../models/cadeau.model').CadeauModel;
     var Operation = require('../models/operation.model').OperationModel;
+    var CadeauClient = require('../models/cadeauClient.model').CadeauClientModel;
+
     module.exports = function(acl,app){
 
         return{
@@ -429,6 +431,42 @@
                 })
 
             },
+
+            listCadeauClient:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        CadeauClient.find({client:req.params.id,entreprise:req.params.entreprise},function(error,cadeau){
+
+                            if(error){
+
+                                res.status(500).json({
+                                    success:false,
+                                    message:error
+                                })
+
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    message: cadeau
+                                })
+                            }
+
+                        }).populate('cadeau').populate({path:'cadeau', populate:{path:'produit'}}).populate({path:'cadeau', populate:{path:'typesPoint'}});
+
+                    }
+                    else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+
+                })
+            }
+
 
             //Post.aggregate([{$match: {postId: 5}}, {$project: {upvotes: {$size: '$upvotes'}}}])
 
