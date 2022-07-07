@@ -244,9 +244,12 @@
 
                             if(req.body.montant>=budget.achat){
 
-                                operation.achat = parseInt(operation.achat) + parseInt(budget.point);
+                                let montant = parseInt(req.body.montant/budget.achat);
+                                let point = parseInt(montant)*parseInt(budget.point);
+
+                                operation.achat = parseInt(operation.achat) + parseInt(point);
                                 operation.fin = new Date();
-                                operation.point = parseInt(operation.point) + parseInt(budget.point);
+                                operation.point = parseInt(operation.point) + parseInt(point);
                                 operation.montantAchat = parseInt(operation.montantAchat) + parseInt(req.body.montant);
                                 operation.depense =  parseInt(operation.depense) + parseInt(req.body.montant);
     

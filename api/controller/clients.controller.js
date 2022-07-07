@@ -1,3 +1,5 @@
+const { ObjectId } = require('mongodb');
+
 (function(){
     "use strict";
      var User = require('../models/users.model').UserModel;
@@ -546,7 +548,7 @@
                         }else{
                             //userService.delete(user._id);
                             clientService.deleteClientToEntreprise(req.params.id, req.params.idEntreprise);
-                            operationService.deleteOperationToEntreprise(req.params.id);
+                            operationService.deleteOperationToEntreprise(req.params.id,req.params.idEntreprise);
                             res.status(200).end()
                         }                            
                      })   
@@ -559,6 +561,49 @@
                         })
 
                     }
+                })
+
+            },
+            deleteManyClient:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+
+                    if(aclres){
+
+                        let clients = req.body;
+                        //console.log("Body", req.body);
+
+                        Client.updateMany({_id:{$in:clients.map(function(obj){
+                            return new ObjectId(obj.id)
+                          })
+                        }},
+                        {
+                            $pull:{entreprise:req.params.id}
+                        },
+                        {multi:true},
+                        function(err,data){
+
+                           if(err){
+                            return callback({
+                                error:err
+                            })
+                           }
+
+                           else{
+                            operationService.deleteMultiOperationEntreprise(clients,req.params.id);
+                            res.status(200).end();
+                           }
+                          
+            
+                        });
+
+                    }else{
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+                    }
+
                 })
 
             }

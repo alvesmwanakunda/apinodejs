@@ -140,6 +140,9 @@
       
       app.route('/delete/client/entreprise/:id([a-fA-F\\d]{24})/:idEntreprise([a-fA-F\\d]{24})')
          .delete(Ctrl.deleteClient);
+        
+      app.route('/delete/client/:id([a-fA-F\\d]{24})')
+         .post(Ctrl.deleteManyClient);   
    };
 
 })();

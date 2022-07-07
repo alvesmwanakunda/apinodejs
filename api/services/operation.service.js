@@ -87,11 +87,11 @@ module.exports ={
     },
 
 
-    deleteOperationToEntreprise: (idClient)=>{
+    deleteOperationToEntreprise: (idClient,idEntreprise)=>{
 
         return new Promise(async(resolve, reject)=>{
 
-            let operation = await OperationModel.findOne({client:idClient});
+            let operation = await OperationModel.findOne({client:idClient,entreprise:idEntreprise});
 
             operation.delete(function(err, operation){
 
@@ -106,6 +106,33 @@ module.exports ={
             })
 
         })
+    },
+
+    deleteMultiOperationEntreprise:(clients, idEntreprise)=>{
+
+        return new Promise(async(resolve, reject)=>{
+
+            OperationModel.deleteMany({
+                entreprise:idEntreprise,
+                client:{$in:clients.map(function(obj){
+                    return new ObjectId(obj.id)
+                  })
+                }
+            }, function(err, operation){
+
+                if(err){
+                    reject(err);
+                }else{
+                    resolve({
+                    body: operation,
+                    status: 'success'
+                    });    
+                }
+
+            })
+
+        })
+
     },
 
     addCadeauClient:(client,idCadeau,entreprise)=>{
