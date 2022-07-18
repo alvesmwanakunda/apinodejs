@@ -50,6 +50,7 @@ module.exports ={
 
                     message.message = new ObjectId(idMessage);
                     message.client = new ObjectId(idClient);
+                    message.entreprise = new ObjectId(messageClient.entreprise);
                     message.dateCreated = new Date();
                     message.lire = false;
 
@@ -70,6 +71,33 @@ module.exports ={
             }else{
 
             }
+
+
+        })
+    },
+
+    updateManyMessage:(idClient, idEntreprise)=>{
+
+        return  new Promise (async(resolve, reject)=>{
+
+            try {
+
+                MessageApp.updateMany({client:new ObjectId(idClient),entreprise:new ObjectId(idEntreprise)},{"$set":{"lire":true}},function(err,message){
+
+                    if(err){
+                        console.log("Erreur", err);
+                    }else{
+                        resolve({
+                            message: message,
+                            status: 'success'
+                        });
+                    }
+                })
+                
+            } catch (error) {
+                reject(error);
+            }
+
 
 
         })

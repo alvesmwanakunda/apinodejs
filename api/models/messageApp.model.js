@@ -18,6 +18,14 @@
             required: true
         },
 
+        entreprise:{
+         
+            type: Schema.ObjectId,
+            ref: "Entreprises",
+            required: true
+             
+        },
+
         dateCreated:{
             type:Date,
             required:false

@@ -29,6 +29,7 @@ let AnniversaireClientApp = async function(){
                         let message = new MessageApp();
                         message.message = new ObjectId(element._id);
                         message.client = new ObjectId(elementClient._id);
+                        message.entreprise = new ObjectId(element.entreprise);
                         message.dateCreated = new Date();
                         message.lire = false;
 
@@ -71,6 +72,7 @@ let RelancerApp= async function(){
                 let message = new MessageApp();
                 message.message = new ObjectId(element._id);
                 message.client = new ObjectId(elementOper.client);
+                message.entreprise = new ObjectId(element.entreprise);
                 message.dateCreated = new Date();
                 message.lire = false;
                 message.save();
