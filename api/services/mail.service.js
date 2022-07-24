@@ -11,13 +11,10 @@ module.exports = {
                 let transporter = nodemailer.createTransport({
                     host: process.env.SMTP_SERVER,
                     port: process.env.SMTP_PORT,
-                    secure: false,
                     auth:{
                         user:process.env.SMTP_USERNAME,
-                        pass:process.env.SMTP_PASSWORD
+                        pass:process.env.SENDGRID_API_KEY
                     },
-                    logger:false,
-                    debug:false
                 },{
                     from: 'Wefid <' + process.env.SMTP_FROM + '>',
                     headers:{
@@ -61,13 +58,10 @@ module.exports = {
                 let transporter = nodemailer.createTransport({
                     host: process.env.SMTP_SERVER,
                     port: process.env.SMTP_PORT,
-                    secure: false,
                     auth:{
                         user:process.env.SMTP_USERNAME,
-                        pass:process.env.SMTP_PASSWORD
-                    },
-                    logger:false,
-                    debug:false
+                        pass:process.env.SENDGRID_API_KEY
+                    }
                 },{
                     from: 'Wefid <' + process.env.SMTP_FROM + '>',
                     headers:{

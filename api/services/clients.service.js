@@ -3,6 +3,8 @@ var twilio = require("twilio");
 var Client = require('../models/clients.model').ClientsModel;
 var ObjectId = require('mongoose').Types.ObjectId;
 var operationService = require('../services/operation.service');
+const axios = require("axios");
+
 
 
 module.exports = {
@@ -45,58 +47,60 @@ module.exports = {
 
     inscriptionSms:(user,password)=>{
 
-        return new Promise((resolve, reject)=>{
+        return new Promise(async(resolve, reject)=>{
 
             try {
 
-                let indicatif = "+221";
-                  var twilioclient = new twilio(process.env.accountSid, process.env.authToken);
-
-                  twilioclient.messages.create({
-                      body: 'Bonjour, \n\n Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur,Wefid. \n\n Votre identifiant de connexion est le suivant: ' + user.phone +'.\n\n Votre mot de passe temporaire est : ' +password,
-                      to: indicatif + user.phone,
-                      from: process.env.twiliofrom
-                    })
-                    .then((message) => {
-                      resolve(message);  
-                    }).catch((err) => {
-                      console.log(err);
-                    });
-                
-            } catch (error) {
+                let indicatif = "221";
+                await axios.post(process.env.FREE_API,
+                 {
+                   from:process.env.SMS_SENDER,
+                   to:indicatif + user.phone,
+                   text:'Bonjour, \n\n Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur,Wefid. \n\n Votre identifiant de connexion est le suivant: ' + user.phone +'.\n\n Votre mot de passe temporaire est : ' +password,
+                 },
+                 {
+                   headers:{
+                     Authorization:`Basic ${process.env.FREE_TOKEN}`
+                   }
+                 }).then(resp=>{
+                    resolve(resp);
+                 }).catch((err)=>{
+                    console.log(err);
+                 })
+               
+               } catch (error) {
                 reject(error);
-            }
-
-                  
+              }       
         });
 
     },
 
     inscriptionSmsPhone:(user)=>{
 
-        return new Promise((resolve, reject)=>{
+        return new Promise(async(resolve, reject)=>{
 
             try {
 
-                let indicatif = "+221";
-                  var twilioclient = new twilio(process.env.accountSid, process.env.authToken);
-
-                  twilioclient.messages.create({
-                      body: 'Bonjour,Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur, Wefid. \n\n Votre identifiant de connexion est le suivant: ' +user.phone,
-                      to: indicatif + user.phone,
-                      from: process.env.twiliofrom
-                    })
-                    .then((message) => {
-                      resolve(message);  
-                    }).catch((err) => {
-                      console.log(err);
-                    });
-                
-            } catch (error) {
+                let indicatif = "221";
+                await axios.post(process.env.FREE_API,
+                 {
+                   from:process.env.SMS_SENDER,
+                   to:indicatif + user.phone,
+                   text:'Bonjour,Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur, Wefid. \n\n Votre identifiant de connexion est le suivant: ' +user.phone,
+                 },
+                 {
+                   headers:{
+                     Authorization:`Basic ${process.env.FREE_TOKEN}`
+                   }
+                 }).then(resp=>{
+                    resolve(resp);
+                 }).catch((err)=>{
+                    console.log(err);
+                 })
+               
+               } catch (error) {
                 reject(error);
-            }
-
-                  
+              }       
         });
 
     },

@@ -17,6 +17,9 @@
         .get(Ctrl.getMessageClient)
         .delete(Ctrl.deleteMessageClient);
 
+        app.route('/message/client/photo/:id([a-fA-F\\d]{24})')
+        .get(Ctrl.deletePhoto)
+    
         app.route('/message/client/test')
            .post(Ctrl.testMessage)
            
