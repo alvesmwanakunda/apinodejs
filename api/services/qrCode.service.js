@@ -31,8 +31,12 @@ module.exports = {
         }
         const xOffset = newWidth < canvas.width ? ((canvas.width - newWidth) / 2) : 0;
         const yOffset = newHeight < canvas.height ? ((canvas.height - newHeight) / 2) : 0;
+        //const xOffset = img.width/2 - canvas.width/2;
+        //const yOffset = img.height/2 - canvas.height/2;
+        
+
         const center = (width - cwidth)/2;
-        ctx.drawImage(img,xOffset, yOffset, newWidth, newHeight);
+        ctx.drawImage(img,40, 43, 40, 40);
         return canvas.toDataURL("image/png");
     },
 
@@ -64,7 +68,8 @@ module.exports = {
         const xOffset = newWidth < canvas.width ? ((canvas.width - newWidth) / 2) : 0;
         const yOffset = newHeight < canvas.height ? ((canvas.height - newHeight) / 2) : 0;
         const center = (width - cwidth)/2;
-        ctx.drawImage(img,xOffset, yOffset, newWidth, newHeight);
+        //ctx.drawImage(img,xOffset, yOffset, newWidth, newHeight);
+        ctx.drawImage(img,40, 43, 40, 40);
         return canvas.toDataURL("image/png");
     },
 
@@ -96,7 +101,8 @@ module.exports = {
         const xOffset = newWidth < canvas.width ? ((canvas.width - newWidth) / 2) : 0;
         const yOffset = newHeight < canvas.height ? ((canvas.height - newHeight) / 2) : 0;
         const center = (width - cwidth)/2;
-        ctx.drawImage(img,xOffset, yOffset, newWidth, newHeight);
+        //ctx.drawImage(img,xOffset, yOffset, newWidth, newHeight);
+        ctx.drawImage(img,40, 43, 40, 40);
         return canvas.toDataURL("image/png");
     }
 

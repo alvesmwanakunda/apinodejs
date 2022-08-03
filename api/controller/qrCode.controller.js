@@ -18,7 +18,7 @@
 
                         let image = "./public/logo.png";
 
-                        let qrCode = await qrCodeService.user_qrcode(req.decoded.id,image,100,50);
+                        let qrCode = await qrCodeService.user_qrcode(req.decoded.id,image,50,50);
 
                         if(qrCode){
 
