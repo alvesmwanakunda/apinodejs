@@ -86,7 +86,7 @@ module.exports = {
                  {
                    from:process.env.SMS_SENDER,
                    to:indicatif + user.phone,
-                   text:'Bonjour,Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur, Wefid. \n\n Votre identifiant de connexion est le suivant: ' +user.phone,
+                   text:'Bonjour,Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur, Wefid. \n\n Votre identifiant de connexion est le suivant: ' +user.phone+ '.\n\n Votre mot de passe temporaire est : ' +password,
                  },
                  {
                    headers:{
@@ -152,12 +152,13 @@ module.exports = {
         });
     },
 
-    saveExcel:(user)=>{
+    saveExcel:(user, idEntreprise)=>{
 
         return new Promise((resolve, reject)=>{
 
             let client = new Client(user);
             //console.log("User Ici", user);
+            //console.log("Entreprise Ici", idEntreprise);
 
             client.save(function(err,client){
 
@@ -169,7 +170,7 @@ module.exports = {
                 });
              }else{
 
-                operationService.addOperationByEntrepise(client.entreprise, client._id,client.user); 
+                operationService.addOperationByEntrepise(idEntreprise, client._id,client.user); 
                 resolve({
                    client: client,
                    status: 'success'

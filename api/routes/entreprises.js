@@ -81,6 +81,9 @@
      app.route('/entreprise/id/:id([a-fA-F\\d]{24})')
         .get(Ctrl.getEntrepriseById);
 
+    app.route('/shared/entreprise/:id([a-fA-F\\d]{24})')
+        .get(Ctrl.sharedGetEntrepriseById);   
+
 
     }
 })();

@@ -143,6 +143,9 @@
         
       app.route('/delete/client/:id([a-fA-F\\d]{24})')
          .post(Ctrl.deleteManyClient);   
+
+      app.route('/shared/client/:id([a-fA-F\\d]{24})')
+         .post(Ctrl.sharedAddClient);
    };
 
 })();

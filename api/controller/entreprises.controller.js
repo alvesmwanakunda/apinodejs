@@ -238,6 +238,26 @@
                         })
                     }
                 }) 
+            },
+
+            sharedGetEntrepriseById(req,res){
+
+                        Entreprise.findOne({_id:req.params.id},function(err, entreprise){
+
+                            if(err){
+
+                                res.status(500).json({
+                                    success:false,
+                                    message:error
+                                })
+
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    message: entreprise
+                                })
+                            }
+                        })
             }
 
         }

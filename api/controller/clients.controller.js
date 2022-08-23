@@ -304,6 +304,150 @@ const { ObjectId } = require('mongodb');
                         }); 
             },
 
+
+            sharedAddClient(req, res){ 
+
+                //console.log("Dec",req.decoded);
+
+                        var client = new Client();
+
+                        var query = {};
+
+                        //console.log("Body", req.body);
+                        if(!req.body.emailorphone)
+                           return res.json({
+                               success:false,
+                               message: ""
+                           });
+
+                        if(Isemail.validate(req.body.emailorphone)){
+                            query = {
+                                email:req.body.emailorphone
+                            };
+                            req.body.email = req.body.emailorphone;
+                        }else{
+                            query ={
+                                phone:req.body.emailorphone
+                            };
+                            req.body.phone = req.body.emailorphone;
+                        }
+
+                        req.body.nom = req.body.nom;
+                        req.body.prenom = req.body.prenom;
+                        req.body.role = 'user';
+                       
+                        var user = new User(req.body);
+
+                        client.genre = req.body.genre;
+                        client.adresse = req.body.adresse;
+                        client.dateNaissance = req.body.age;
+
+                        if(req.body.age){
+                            //console.log("Date naissance", req.body.age);
+                            client.day = new Date(req.body.age).getDate();
+                            client.month = new Date(req.body.age).getMonth()+1;
+                        }
+                        client.dateCreated = new Date();
+                        client.user = user._id;
+                        //client.entreprise = req.params.id
+                        var codeClient = Codes.generate({
+                            length:5,
+                            count:1,
+                            charset: Codes.charset("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+                        });
+                        codeClient = codeClient[0];
+                        client.numeroClient = codeClient;
+
+
+                         User.findOne(query, function(err, userexists){
+                            if(err)
+                                return res.status(500).json({
+                                    success: false,
+                                    message: err
+                                });
+                            if(userexists){
+                                return res.json({
+                                    success: false,
+                                    message: "already exists"
+                                })
+                            }
+
+                            User.remove(query, function(err){
+
+                                var password = Codes.generate({
+                                  length:8,
+                                  count:1,
+                                  charset: Codes.charset("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+                                });
+                                password = password[0];
+                                
+                                user.password = crypto.createHash('md5').update(password).digest("hex");
+                                user.valid = true;
+
+                                user.save(function(err, user){
+                                    //console.log("Erreur", err);
+                                    //console.log("User", user);
+                                    if(err)
+                                    return res.status(500).json({
+                                        success: false,
+                                        message: err
+                                    });
+                                    if(user.phone){
+                                    
+                                        var code = Codes.generate({
+                                            length: 4,
+                                            count: 1,
+                                            charset: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                        });
+                                        code = code[0];
+                                        user.code = code;
+                                        user.save(function(err, user){
+                                            if(err)
+                                            return res.status(500).json({
+                                                success: false,
+                                                message: err
+                                            });
+                                            client.save(); 
+                                            if(client){
+                                                operationService.addOperationByEntrepise(req.params.id, client._id,user);
+                                            }
+                                            clientService.inscriptionSms(user,password);
+                                            res.json({
+                                                success: true,
+                                                message:user
+                                            });   
+                                        }) 
+
+                                    }else{
+                                        var code = Codes.generate({
+                                        length:128,
+                                        count:1,
+                                        charset: Codes.charset("alphanumeric")
+                                        });
+                                        code = code[0];
+                                        user.code = code;
+                                        user.save(function(err, user){
+                                            if(err)
+                                            return res.status(500).json({
+                                                success: false,
+                                                message: err
+                                            });
+                                            client.save(); 
+                                            if(client){
+                                                operationService.addOperationByEntrepise(req.params.id, client._id,user);
+                                            }
+                                            clientService.inscriptionClient(user,password);
+                                            res.json({
+                                                success: true,
+                                                message:user
+                                            });   
+                                        }) 
+                                    }   
+                                });
+                            })
+                        }); 
+            },
+
             getAllClientsByEntreprise(req, res){
                 acl.isAllowed(req.decoded.id, 'clients', 'retreive', async function(err, aclres){
                     if(aclres){
@@ -467,7 +611,7 @@ const { ObjectId } = require('mongodb');
                                                                     numeroClient : codeClient
                                                                 };
                                                                 //console.log("Client sms", client);
-                                                                clientService.saveExcel(client);                                                                
+                                                                clientService.saveExcel(client,req.params.id);                                                                
                                                                 clientService.inscriptionSms(user);
                                                                   
                                                             }) 
@@ -495,7 +639,7 @@ const { ObjectId } = require('mongodb');
                                                                     numeroClient : codeClient
                                                                 };
                                                                 //console.log("Client email", client);
-                                                                clientService.saveExcel(client);
+                                                                clientService.saveExcel(client,req.params.id);
                                                                 clientService.inscriptionClient(user,password);
                                                                    
                                                             }) 
