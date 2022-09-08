@@ -101,6 +101,29 @@
                 })
             },
 
+            getOperationByUser:function(req,res) {
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+                 
+                    if(aclres){
+
+                        let operation = await Operation.findOne({user:new ObjectId(req.decoded.id),entreprise:new ObjectId(req.params.id)});
+                        res.json({
+                            success: true,
+                            message: operation
+                        });
+
+                    }else{
+
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+
+                })
+            },
+
             listOperationByClient:function(req,res){
 
                 acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
@@ -376,6 +399,7 @@
                         let operation = await Operation.findOne({user:req.params.id, entreprise:req.params.entreprise});
                         let cadeau = await Cadeau.findOne({_id:new ObjectId(req.params.cadeau)}).populate("typesPoint");
                         let entreprise = await Entreprises.findOne({_id:new ObjectId(req.params.entreprise)});
+                        let type;
 
 
                         //console.log("Cadeau", cadeau.entreprise);
@@ -389,10 +413,12 @@
 
                                 operation.visite = parseInt(operation.visite) - parseInt(cadeau.point);
                                 operation.point = parseInt(operation.point) - parseInt(cadeau.point);
+                                type = "Visite";
 
                             }else{
                                 operation.achat = parseInt(operation.achat) - parseInt(cadeau.point);
                                 operation.point = parseInt(operation.point) - parseInt(cadeau.point);
+                                type="Achat";
                             }
 
                             Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},function(error,operation){
@@ -411,7 +437,7 @@
                                         operationService.addUserCadeau(cadeau._id,req.params.id);
                                         operationService.updateCadeau(cadeau._id);
                                     }
-                                    operationService.addDepense(req.params.id,req.params.entreprise,cadeau.produit,cadeau.point);
+                                    operationService.addDepense(req.params.id,req.params.entreprise,cadeau.produit,cadeau.point,type);
 
                                     res.status(200).json({
                                         success:true,
@@ -974,6 +1000,8 @@
 
             },
 
+
+
             lengthDepense:function(req,res){
                 acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
 
@@ -997,24 +1025,6 @@
                             }
 
                         })
-
-                        /*let depense = Depense.find({entreprise: req.params.id,user:req.decoded.id});
-
-                        depense.count(function(err, count){
-
-                            if(err){
-                                res.status(500).json({
-                                    success:false,
-                                    depense:err
-                                })
-    
-                            }else{
-                                res.status(200).json({
-                                    success:true,
-                                    depense: count
-                                })
-                            }
-                        })*/
 
                     }else{
                         return res.status(401).json({
@@ -1078,6 +1088,78 @@
                 })
                 
             },
+
+            // Nombre des depenses par entreprise et utilisateur
+
+            lengthDepenseVisite:function(req,res){
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        Depense.aggregate([
+                            {$match:{$and:[{entreprise:new ObjectId(req.params.id)},{user:new ObjectId(req.decoded.id)},{type:"Visite"}]}},
+                            {$group: {_id:null, point:{$sum:"$point"}}}
+                        ],function(err,operation){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    depense:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    depense: operation
+                                })
+                            }
+
+                        })
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });  
+                    }
+                })
+
+            },
+
+            lengthDepenseAchat:function(req,res){
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        Depense.aggregate([
+                            {$match:{$and:[{entreprise:new ObjectId(req.params.id)},{user:new ObjectId(req.decoded.id)},{type:"Achat"}]}},
+                            {$group: {_id:null, point:{$sum:"$point"}}}
+                        ],function(err,operation){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    depense:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    depense: operation
+                                })
+                            }
+
+                        })
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });  
+                    }
+                })
+
+            },
+
+            // Fin Nombre des depenses par entreprise et utilisateur
 
             lengthEncaisseOperation:function(req,res){
 

@@ -248,7 +248,7 @@ module.exports ={
         })
     },
 
-    addDepense:(user,entreprise,produit,point)=>{
+    addDepense:(user,entreprise,produit,point,type)=>{
         return new Promise(async(resolve,reject)=>{
 
             let client = await Client.findOne({user:user});
@@ -256,6 +256,7 @@ module.exports ={
             let depense = new Depense();
             depense.creation = new Date();
             depense.user = new ObjectId(user);
+            depense.type = type;
             if(client){
               depense.client = new ObjectId(client._id);
             }

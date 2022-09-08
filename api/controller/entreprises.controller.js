@@ -3,7 +3,9 @@
     'use strict';
     var entrepriseService = require('../services/entreprises.service');
     var Entreprise = require('../models/entreprises.model').EntrepriseModel;
+    var Operation = require('../models/operation.model').OperationModel;
     var fs = require("fs");
+    var ObjectId = require('mongoose').Types.ObjectId;
 
 
     module.exports = function(acl, app){
@@ -258,7 +260,62 @@
                                 })
                             }
                         })
-            }
+            },
+
+            comparaisonListEntreprise(req, res){
+
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+
+                    if(aclres){
+
+                        let listEntreprise=[];
+                        let list4=[];
+                        let list3=[];
+
+                        let list1 = await Entreprise.find({}, '-description -createur -phone1 -phone2');
+                        let list2 = await Operation.find({user:new ObjectId(req.decoded.id)},'point').populate('entreprise');
+
+                        listEntreprise = list2.map((data)=>({
+                            point:data.point,
+                            _id:data.entreprise._id,
+                            nom:data.entreprise.nom,
+                            categorie:data.entreprise.categorie,
+                            image:data.entreprise.image,
+                            adresse:data.entreprise.adresse,
+                            creation:data.entreprise.creation,
+
+                        }));
+
+                        //console.log("List", listEntreprise);
+                        list3 = list1.concat(listEntreprise);
+
+                        if(listEntreprise.length>0){
+
+                            list4  = list3.filter((value,index, self)=>
+                                index = self.findIndex((t)=>(
+
+                                t._id === value._id && t.point === value.point
+
+                                ))
+                            );
+
+                        }else{
+                            list4 = list3;
+                        }
+                       
+                        res.status(200).json({
+                            success:true,
+                            message: list4
+                        });
+                    }else{
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+                    }
+                })
+
+            },
 
         }
     }

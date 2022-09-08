@@ -40,7 +40,7 @@ module.exports = {
         return canvas.toDataURL("image/png");
     },
 
-    cadeau_qrcode: async(cadeau, center_image, width, cwidth)=>{
+    cadeau_qrcode: async(cadeau, width, cwidth)=>{
 
         const canvas = createCanvas(width, width);
         QRCode.toCanvas(
@@ -56,8 +56,8 @@ module.exports = {
             }
         );
 
-        const ctx = canvas.getContext("2d");
-        const img = await loadImage(center_image);
+        //const ctx = canvas.getContext("2d");
+        /*const img = await loadImage(center_image);
         const wrh = img.width/img.height;
         const newWidth = canvas.width;
         const newHeight = newWidth / wrh;
@@ -69,7 +69,7 @@ module.exports = {
         const yOffset = newHeight < canvas.height ? ((canvas.height - newHeight) / 2) : 0;
         const center = (width - cwidth)/2;
         //ctx.drawImage(img,xOffset, yOffset, newWidth, newHeight);
-        ctx.drawImage(img,40, 43, 40, 40);
+        ctx.drawImage(img,40, 43, 40, 40);*/
         return canvas.toDataURL("image/png");
     },
 
@@ -89,7 +89,7 @@ module.exports = {
             }
         );
 
-        const ctx = canvas.getContext("2d");
+        /*const ctx = canvas.getContext("2d");
         const img = await loadImage(center_image);
         const wrh = img.width/img.height;
         const newWidth = canvas.width;
@@ -100,9 +100,9 @@ module.exports = {
         }
         const xOffset = newWidth < canvas.width ? ((canvas.width - newWidth) / 2) : 0;
         const yOffset = newHeight < canvas.height ? ((canvas.height - newHeight) / 2) : 0;
-        const center = (width - cwidth)/2;
+        const center = (width - cwidth)/2;*/
         //ctx.drawImage(img,xOffset, yOffset, newWidth, newHeight);
-        ctx.drawImage(img,40, 43, 40, 40);
+        //ctx.drawImage(img,40, 43, 40, 40);
         return canvas.toDataURL("image/png");
     }
 

@@ -68,6 +68,9 @@
 
     app.route('/entreprises')
         .get(Ctrl.getEntrepriseByCategorie);
+
+    app.route('/entreprises/comparaison')
+        .get(Ctrl.comparaisonListEntreprise);    
         
     app.route('/entreprises/visiter')
         .get(Ctrl.getEntrepriseByUserVisiter);

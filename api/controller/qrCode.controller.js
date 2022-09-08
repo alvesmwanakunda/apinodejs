@@ -55,7 +55,7 @@
 
                         let code = req.params.id+","+req.decoded.id;
 
-                        let qrCode = await qrCodeService.cadeau_qrcode(code,image,100,50);
+                        let qrCode = await qrCodeService.cadeau_qrcode(code,100,50);
 
                         if(qrCode){
 
@@ -92,7 +92,7 @@
 
                         let code = req.params.id;
 
-                        let qrCode = await qrCodeService.avoir_qrcode(code,image,100,50);
+                        let qrCode = await qrCodeService.avoir_qrcode(code,100,50);
 
                         if(qrCode){
 
