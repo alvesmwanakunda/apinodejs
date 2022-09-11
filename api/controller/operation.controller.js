@@ -415,6 +415,10 @@
                                 if(cadeau.point>operation.visite){
 
                                     message = "Le point cadeau est supérieur  à votre point visite"
+                                    res.status(200).json({
+                                        success:true,
+                                        message: message,
+                                    })
 
                                 }else{
 
@@ -422,49 +426,85 @@
                                     operation.point = parseInt(operation.point) - parseInt(cadeau.point);
                                     type = "Visite";
 
+                                    Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},function(error,operation){
+                                        if(err){
+                                            res.status(500).json({
+                                                success:false,
+                                                message:error
+                                            })
+                                        }
+                                        
+                                        else{
+        
+                                            if(cadeauList){
+                                                 operationService.updateCadeauClient(cadeauList._id);
+                                                 operationService.updateCadeau(cadeau._id);
+                                            }else{
+                                                operationService.addCadeauClient(operation.client,cadeau._id,req.params.entreprise);
+                                                operationService.addUserCadeau(cadeau._id,req.params.id);
+                                                operationService.updateCadeau(cadeau._id);
+                                            }
+                                            operationService.addDepense(req.params.id,req.params.entreprise,cadeau.produit,cadeau.point,type);
+                                            message="Votre code cadeau a été scanné avec succès"
+        
+                                            res.status(200).json({
+                                                success:true,
+                                                operation: operation,
+                                                message: message,
+                                            })
+        
+                                        }
+                                    })
+
                                 }
 
                             }else{
                                 if(cadeau.point>operation.achat){
 
                                     message = "Le point achat est supérieur à votre point achat"
+                                    res.status(200).json({
+                                        success:true,
+                                        message: message,
+                                    })
 
                                 }else{
 
                                     operation.achat = parseInt(operation.achat) - parseInt(cadeau.point);
                                     operation.point = parseInt(operation.point) - parseInt(cadeau.point);
                                     type="Achat";
+
+                                    Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},function(error,operation){
+                                        if(err){
+                                            res.status(500).json({
+                                                success:false,
+                                                message:error
+                                            })
+                                        }
+                                        
+                                        else{
+        
+                                            if(cadeauList){
+                                                 operationService.updateCadeauClient(cadeauList._id);
+                                                 operationService.updateCadeau(cadeau._id);
+                                            }else{
+                                                operationService.addCadeauClient(operation.client,cadeau._id,req.params.entreprise);
+                                                operationService.addUserCadeau(cadeau._id,req.params.id);
+                                                operationService.updateCadeau(cadeau._id);
+                                            }
+                                            operationService.addDepense(req.params.id,req.params.entreprise,cadeau.produit,cadeau.point,type);
+                                            message="Votre code cadeau a été scanné avec succès"
+        
+                                            res.status(200).json({
+                                                success:true,
+                                                operation: operation,
+                                                message: message,
+                                            })
+        
+                                        }
+                                    })
                                 }
                                 
                             }
-
-                            Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},function(error,operation){
-                                if(err){
-                                    res.status(500).json({
-                                        success:false,
-                                        message:error
-                                    })
-                                }else{
-
-                                    if(cadeauList){
-                                         operationService.updateCadeauClient(cadeauList._id);
-                                         operationService.updateCadeau(cadeau._id);
-                                    }else{
-                                        operationService.addCadeauClient(operation.client,cadeau._id,req.params.entreprise);
-                                        operationService.addUserCadeau(cadeau._id,req.params.id);
-                                        operationService.updateCadeau(cadeau._id);
-                                    }
-                                    operationService.addDepense(req.params.id,req.params.entreprise,cadeau.produit,cadeau.point,type);
-                                    message="Votre code cadeau a été scanné avec succès"
-
-                                    res.status(200).json({
-                                        success:true,
-                                        operation: operation,
-                                        message: message,
-                                    })
-
-                                }
-                            })
 
                         }else{
 
