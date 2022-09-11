@@ -400,6 +400,7 @@
                         let cadeau = await Cadeau.findOne({_id:new ObjectId(req.params.cadeau)}).populate("typesPoint");
                         let entreprise = await Entreprises.findOne({_id:new ObjectId(req.params.entreprise)});
                         let type;
+                        let message;
 
 
                         //console.log("Cadeau", cadeau.entreprise);
@@ -411,14 +412,30 @@
 
                             if(cadeau.typesPoint.nom=="Visites"){
 
-                                operation.visite = parseInt(operation.visite) - parseInt(cadeau.point);
-                                operation.point = parseInt(operation.point) - parseInt(cadeau.point);
-                                type = "Visite";
+                                if(cadeau.point>operation.visite){
+
+                                    message = "Le point cadeau est supérieur  à votre point visite"
+
+                                }else{
+
+                                    operation.visite = parseInt(operation.visite) - parseInt(cadeau.point);
+                                    operation.point = parseInt(operation.point) - parseInt(cadeau.point);
+                                    type = "Visite";
+
+                                }
 
                             }else{
-                                operation.achat = parseInt(operation.achat) - parseInt(cadeau.point);
-                                operation.point = parseInt(operation.point) - parseInt(cadeau.point);
-                                type="Achat";
+                                if(cadeau.point>operation.achat){
+
+                                    message = "Le point achat est supérieur à votre point achat"
+
+                                }else{
+
+                                    operation.achat = parseInt(operation.achat) - parseInt(cadeau.point);
+                                    operation.point = parseInt(operation.point) - parseInt(cadeau.point);
+                                    type="Achat";
+                                }
+                                
                             }
 
                             Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},function(error,operation){
@@ -438,21 +455,24 @@
                                         operationService.updateCadeau(cadeau._id);
                                     }
                                     operationService.addDepense(req.params.id,req.params.entreprise,cadeau.produit,cadeau.point,type);
+                                    message="Votre code cadeau a été scanné avec succès"
 
                                     res.status(200).json({
                                         success:true,
                                         operation: operation,
-                                        message: "Votre code cadeau a été scanné avec succès",
+                                        message: message,
                                     })
 
                                 }
                             })
 
                         }else{
+
+                            message="Votre code cadeau ne correspond pas a nos codes cadeau"
                             
                             res.status(200).json({
                                 success:true,
-                                message: "Votre code cadeau ne correspond pas a nos codes cadeau"
+                                message: message
                             })
 
                         }
