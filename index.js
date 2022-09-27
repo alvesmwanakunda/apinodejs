@@ -147,9 +147,22 @@ function initApp(){
       console.log("Cron application");
   }); 
               
-  app.listen(port,()=>{
+  var server = app.listen(port,()=>{
       console.log(`Now listening on port ${port}`);
   });
+  
+  /*
+   socket io
+  */
+
+   var io = require('socket.io')(server,{
+    cors:{origin: '*'}
+   });
+   global.io = io;
+   io.on('connection', (socket)=>{
+    global.socket = socket;
+    console.log("Socket run");
+   })
   
 }
 

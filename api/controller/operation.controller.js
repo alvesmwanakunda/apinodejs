@@ -191,6 +191,8 @@
                                        messageAppService.createMessageVisite(messageClient._id,client._id);
                                     }
                                     operationService.addEncaisse(req.params.id,req.params.entreprise,pointVisite.point,type);
+                                    console.log("Socket",  global.socket.broadcast.emit('get_visite', operation.point));
+                                    global.socket.broadcast.emit('get_visite', operation.point);
                                     res.status(200).json({
                                         success:true,
                                         message: operation
