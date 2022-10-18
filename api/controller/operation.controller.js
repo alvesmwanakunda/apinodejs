@@ -17,6 +17,9 @@
     var ListAvoir = require('../models/listAvoir.model').ListAvoirModel;
     var MessageClient = require('../models/messageClient.model').MessageClientModel;
     var messageAppService = require('../services/messageApp.service');
+    var TokenModel = require('../models/token.model').TokenModel;
+    const axios = require("axios");
+
 
 
     module.exports = function(acl,app){
@@ -171,7 +174,7 @@
                         let client = await Client.findOne({user:req.params.id});
                         let type="Visites";
                         let messageClient = await MessageClient.findOne({entreprise:req.params.entreprise, etat:"Envoyer",type:"Visite",automatique:true});
-
+                        let tokenUser = await TokenModel.findOne({user:req.params.id});
 
                         if(operation){
 
@@ -180,7 +183,7 @@
                             operation.point = parseInt(operation.point) + parseInt(pointVisite.point),
                             operation.nombreVisite = parseInt(operation.nombreVisite) + 1;
 
-                            Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},function(error,operation){
+                            Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},async function(error,operation){
                                 if(err){
                                     res.status(500).json({
                                         success:false,
@@ -188,7 +191,27 @@
                                     })
                                 }else{
                                     if(messageClient){
+
+
                                        messageAppService.createMessageVisite(messageClient._id,client._id);
+                                       if(messageClient.typePromotion=="App" && tokenUser){
+                                        messageAppService.notificationPush(tokenUser.token, messageClient.nom, messageClient.message);
+                                       }else{
+
+                                        let grant = `grant_type=client_credentials`;
+                                        const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                                        {
+                                          headers:{
+                                            Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                                           'Content-Type': 'application/x-www-form-urlencoded'
+                                         }
+                                        
+                                        });
+                                        if(response.data.access_token){
+                                            messageAppService.notificationSms(req.params.id,messageClient.message,response.data.access_token);
+                                        }
+
+                                      }
                                     }
                                     operationService.addEncaisse(req.params.id,req.params.entreprise,pointVisite.point,type);
                                     console.log("Socket",  global.socket.broadcast.emit('get_visite', operation.point));
@@ -215,7 +238,7 @@
                             op.point =pointVisite.point;
                             op.nombreVisite =1;
 
-                            op.save(function(err, operation){
+                            op.save(async function(err, operation){
                                 if(err){
                                     res.status(500).json({
                                         success:false,
@@ -224,6 +247,22 @@
                                 }else{
                                     if(messageClient){
                                         messageAppService.createMessageVisite(messageClient._id,client._id);
+                                        if(messageClient.typePromotion=="App" && tokenUser){
+                                            messageAppService.notificationPush(tokenUser.token, messageClient.nom, messageClient.message);
+                                        }else{
+                                            let grant = `grant_type=client_credentials`;
+                                            const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                                            {
+                                            headers:{
+                                                Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                                            'Content-Type': 'application/x-www-form-urlencoded'
+                                            }
+                                            
+                                            });
+                                            if(response.data.access_token){
+                                                messageAppService.notificationSms(req.params.id,messageClient.message,response.data.access_token);
+                                            }
+                                        }
                                      }
                                     operationService.addEncaisse(req.params.id,req.params.entreprise,pointVisite.point,type);
                                     res.status(200).json({
@@ -286,7 +325,8 @@
                                         })
                                     }else{
     
-                                        operationService.addEncaisse(req.params.id,req.params.entreprise,budget.point,type);
+                                        operationService.addEncaisse(req.params.id,req.params.entreprise,point,type);
+                                        global.socket.broadcast.emit('get_visite', operation.point);
                                         res.status(200).json({
                                             success:true,
                                             message: operation
@@ -448,11 +488,14 @@
                                             }
                                             operationService.addDepense(req.params.id,req.params.entreprise,cadeau.produit,cadeau.point,type);
                                             message="Votre code cadeau a été scanné avec succès"
+
+                                            global.socket.broadcast.emit('get_visite', operation.point);
         
                                             res.status(200).json({
                                                 success:true,
                                                 operation: operation,
                                                 message: message,
+                                                point:cadeau.point,
                                             })
         
                                         }
@@ -495,11 +538,13 @@
                                             }
                                             operationService.addDepense(req.params.id,req.params.entreprise,cadeau.produit,cadeau.point,type);
                                             message="Votre code cadeau a été scanné avec succès"
-        
+
+                                            global.socket.broadcast.emit('get_visite', operation.point);
                                             res.status(200).json({
                                                 success:true,
                                                 operation: operation,
                                                 message: message,
+                                                point:cadeau.point,
                                             })
         
                                         }

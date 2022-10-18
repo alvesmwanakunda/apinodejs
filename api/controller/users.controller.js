@@ -15,12 +15,18 @@
      const entrepriseService = require('../services/entreprises.service');
      const clientService = require('../services/clients.service');
      const userService = require('../services/users.service');
+     const tokenService = require('../services/token.service');
      var Isemail = require('isemail');
      var connexionService= require('../services/connexion.service');
      var ObjectId = require('mongoose').Types.ObjectId;
+     var TokenModel = require('../models/token.model').TokenModel;
+     var FCM = require('fcm-node');
+     var serverKey = process.env.SERVER_KEY;
+     var fcm = new FCM(serverKey);
+     const axios = require("axios");
+     const queryString = require('node:querystring');
 
-
-
+    
      module.exports = function(acl){
         return{
 
@@ -90,7 +96,7 @@
                                         code = code[0];
                                         user.code = code;
                                         console.log("Code", code);
-                                        user.save(function(err, user){
+                                        user.save(async function(err, user){
                                             if(err)
                                             return res.status(500).json({
                                                 success: false,
@@ -101,7 +107,17 @@
                                                 entrepriseService.addAvoirToEntreprise(entreprise._id);
                                                 entrepriseService.addTypePoint(entreprise._id);
                                             } 
-                                            smsService.inscription(user);
+                                            let grant = `grant_type=client_credentials`;
+                                            const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                                            {
+                                                    headers:{
+                                                        Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                                                    'Content-Type': 'application/x-www-form-urlencoded'
+                                                    }     
+                                            });
+                                            if(response.data.access_token){
+                                                smsService.inscription(user,response.data.access_token); 
+                                            }
                                             res.json({
                                                 success: true,
                                                 message:user
@@ -141,6 +157,7 @@
                      
                
             },
+
             userExist:function(req, res){
                 User.findOne({email:req.body.email},function(err, result){
                     if(err || !result)
@@ -157,7 +174,9 @@
                        })
                 })
             },
+
             login:function(req,res){
+
                   if(!req.body.emailorphone)
                     return res.send({
                         success: false,
@@ -211,7 +230,7 @@
                           roles:user.role
                       }, async function(err, role){
                           if(err)
-                            return res,send({
+                            return res.send({
                                 success: false,
                                 message: err
                             });
@@ -220,7 +239,15 @@
                               if(entreprise){
                                 connexionService.addConnexion(user._id,entreprise._id);
                               }  
-                          }  
+                          }
+
+                          let tokenUser = await TokenModel.findOne({user:user._id});
+                          if(tokenUser){
+                               tokenService.updateToken(user._id,token);
+                          }else{
+                               tokenService.createToken(user._id,token);
+                          }
+                          //console.log("Token", token);
                           res.json({
                               success: true,
                               message:{
@@ -236,6 +263,7 @@
                       });
                   });
             },
+
             resetPassword:function(req,res){
 
                 //console.log("Body", req.body);
@@ -310,13 +338,25 @@
                         //password = password[0];
                         //user.password = crypto.createHash('md5').update(password).digest("hex");
 
-                        user.save(function(err,user){
+                        user.save(async function(err,user){
                             if(err)
                             return res.status(500).json({
                                 success: false,
                                 message: err
                             });
-                            smsService.reset(user,code,password);  
+
+                            let grant = `grant_type=client_credentials`;
+                            const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                            {
+                                    headers:{
+                                        Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                                       'Content-Type': 'application/x-www-form-urlencoded'
+                                     }
+                                    
+                            });
+                            if(response.data.access_token){
+                                smsService.reset(user,code,password,response.data.access_token); 
+                            }
                             res.json({
                                 success:true,
                                 message:"ok"
@@ -327,6 +367,7 @@
                     
                 });
             },
+
             changePassword:function(req,res){
                 User.findOne({
                     email:req.body.email,
@@ -358,6 +399,7 @@
                     });
                 });
             },
+
             changePasswordCode:function(req,res){
                 User.findOne({
                     phone:req.body.phone,
@@ -389,6 +431,7 @@
                     });
                 });
             },
+
             validcode: function (req, res) {
                 User.findOne({
                     phone: req.body.phone,
@@ -422,6 +465,7 @@
                 });
                 });
             },
+
             validemail: function (req, res) {
                 User.findOne({
                 email: req.body.email,
@@ -456,6 +500,7 @@
                 });
                 });
             },
+
             changePasswordProfil:function(req,res, next){
                 acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
                     if(aclres){
@@ -597,14 +642,29 @@
                                 code = code[0];
                                 user.code = code;
                                 console.log("Code", code);
-                                user.save(function(err, user){
-                                    if(err)
-                                    return res.status(500).json({
-                                        success: false,
-                                        message: err
+                                user.save(async function(err, user){
+                                    if(err){
+
+                                        return res.status(500).json({
+                                            success: false,
+                                            message: err
+                                        });
+
+                                    }
+
+                                    let grant = `grant_type=client_credentials`;
+                                    const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                                    {
+                                      headers:{
+                                        Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                                       'Content-Type': 'application/x-www-form-urlencoded'
+                                     }
+                                    
                                     });
+                                    if(response.data.access_token){
+                                      clientService.inscriptionSms(user, password,response.data.access_token);
+                                    }
                                     entrepriseService.addUserToEntreprise(req.params.id,user._id);
-                                    clientService.inscriptionSms(user, password);
                                     res.json({
                                         success: true,
                                         message:user
@@ -747,6 +807,8 @@
 
                         Client.findOne({user:req.decoded.id}, function(err, user){
 
+                            //console.log("Token", req.headers.token);
+
                            if(err)
                             return res.status(500).json({
                                 success:false,
@@ -768,7 +830,6 @@
                 })
 
             },
-
 
 
             getAgent:function(req,res){
@@ -835,6 +896,78 @@
                     }
                 })
 
+            },
+
+            testNotification:function(req,res){
+
+                console.log("server Key", process.env.SERVER_KEY);
+
+                var message = {
+                    to:req.body.token,
+                    collapse_key: 'wefid_app',
+    
+                    notification:{
+                        title: req.body.title,
+                        body: req.body.body,
+                        sound:  "default",
+                        tag:'wefid_app',
+                    }
+                };
+    
+                fcm.send(message, function(err, response){
+                    if(err){
+                        console.log("Something has gone wrong!", err);
+                        res.json({
+                            message: err,
+                            status: 'no'
+                        });
+                    }else{
+                        console.log("Successfully sent with response: ", response);
+                        res.json({
+                            message: response,
+                            status: 'success'
+                        });
+                    }
+                })
+
+
+            },
+
+            messageTest:async function(req,res){
+
+                try {
+
+                    let grant = `grant_type=client_credentials`;
+                    const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                    {
+                      headers:{
+                        Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                       'Content-Type': 'application/x-www-form-urlencoded'
+                     }
+                    
+                    });
+                    //console.log("Response", response.data);
+
+                    if(response.data){
+                        console.log("Token", response.data.access_token);
+                        smsService.testMessage(response.data.access_token);
+                        return res.json({
+                            success: true,
+                            message: response.data
+                        }) 
+
+                    }else{
+
+                        return res.json({
+                            success: false,
+                        }) 
+                    }
+                  } catch (error) {
+                    return res.json({
+                        success: false,
+                        message: error
+                    }) 
+                  } 
             }
 
             

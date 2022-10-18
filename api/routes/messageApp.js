@@ -14,5 +14,8 @@
         app.route('/delete/all/message')
            .post(Ctrl.deleteManyMessageClient)  
 
+        app.route('/messages/client/:id([a-fA-F\\d]{24})')
+           .get(Ctrl.getCountMessageUser)
+
     }
 })();

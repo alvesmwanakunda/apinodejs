@@ -45,64 +45,64 @@ module.exports = {
         });
     },
 
-    inscriptionSms:(user,password)=>{
+    inscriptionSms:(user,password, token)=>{
 
         return new Promise(async(resolve, reject)=>{
 
             try {
-
-                let indicatif = "221";
-                await axios.post(process.env.FREE_API,
-                 {
-                   from:process.env.SMS_SENDER,
-                   to:indicatif + user.phone,
-                   text:'Bonjour, \n\n Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur,Wefid. \n\n Votre identifiant de connexion est le suivant: ' + user.phone +'.\n\n Votre mot de passe temporaire est : ' +password,
-                 },
-                 {
-                   headers:{
-                     Authorization:`Basic ${process.env.FREE_TOKEN}`
-                   }
-                 }).then(resp=>{
-                    resolve(resp);
-                 }).catch((err)=>{
-                    console.log(err);
-                 })
-               
-               } catch (error) {
-                reject(error);
-              }       
-        });
-
+    
+              const response = await axios.post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B221771852694/requests",
+              {
+                "outboundSMSMessageRequest":{
+                  "address":`tel:+221${user.phone}`,
+                  "senderAddress":"tel:+221771852694",
+                  "senderName": "Wefid",
+                  "outboundSMSTextMessage":{
+                      "message":'Bonjour, \n\n Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur,Wefid. \n\n Votre identifiant de connexion est le suivant: ' + user.phone +'.\n\n Votre mot de passe temporaire est : ' +password,
+                  }
+                }
+              },
+              {
+                  headers:{ Authorization:`Bearer ${token}`}      
+              });
+    
+              console.log("Response", response);
+              resolve(response);
+            } catch (error) {
+              reject(error);
+            }
+    
+        })
     },
 
-    inscriptionSmsPhone:(user)=>{
+    inscriptionSmsPhone:(user, token)=>{
 
         return new Promise(async(resolve, reject)=>{
 
             try {
-
-                let indicatif = "221";
-                await axios.post(process.env.FREE_API,
-                 {
-                   from:process.env.SMS_SENDER,
-                   to:indicatif + user.phone,
-                   text:'Bonjour,Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur, Wefid. \n\n Votre identifiant de connexion est le suivant: ' +user.phone+ '.\n\n Votre mot de passe temporaire est : ' +password,
-                 },
-                 {
-                   headers:{
-                     Authorization:`Basic ${process.env.FREE_TOKEN}`
-                   }
-                 }).then(resp=>{
-                    resolve(resp);
-                 }).catch((err)=>{
-                    console.log(err);
-                 })
-               
-               } catch (error) {
-                reject(error);
-              }       
-        });
-
+    
+              const response = await axios.post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B221771852694/requests",
+              {
+                "outboundSMSMessageRequest":{
+                  "address":`tel:+221${user.phone}`,
+                  "senderAddress":"tel:+221771852694",
+                  "senderName": "Wefid",
+                  "outboundSMSTextMessage":{
+                      "message":'Bonjour,Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur, Wefid. \n\n Votre identifiant de connexion est le suivant: ' +user.phone+ '.\n\n Votre mot de passe temporaire est : ' +password,
+                  }
+                }
+              },
+              {
+                  headers:{ Authorization:`Bearer ${token}`}      
+              });
+    
+              console.log("Response", response);
+              resolve(response);
+            } catch (error) {
+              reject(error);
+            }
+    
+        })
     },
 
     listClientByEntreprise:(idEntreprise)=>{
@@ -181,6 +181,7 @@ module.exports = {
 
         });
     },
+
     deleteClientToEntreprise:(idClient,idEntreprise)=>{
 
 
@@ -204,6 +205,7 @@ module.exports = {
 
         })
     },
+
     updateClient:(user,genre,adresse,age)=>{
 
         return new Promise(async(resolve,reject)=>{

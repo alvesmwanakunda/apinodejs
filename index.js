@@ -122,6 +122,7 @@ function initApp(){
           req.decoded = decoded;
           global.infosUser = decoded;
           acl.addUserRoles(req.decoded.id, Encryption.decrypt(req.decoded.role));
+          //console.log("req.decode.", req.decoded.id);
           next();
         }
       });

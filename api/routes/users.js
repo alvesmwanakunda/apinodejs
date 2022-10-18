@@ -268,6 +268,12 @@
       app.route('/agent/:id([a-fA-F\\d]{24})')
          .get(Ctrl.getAgent)
          .put(Ctrl.updateProfilAgent);
+
+      app.route('/notification')
+         .post(Ctrl.testNotification);
+         
+      app.route('/test/message')
+         .get(Ctrl.messageTest)   
   }
   
 })();

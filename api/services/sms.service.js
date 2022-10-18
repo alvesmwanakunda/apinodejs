@@ -5,61 +5,95 @@ const axios = require("axios");
 module.exports = {
 
 
-    inscription:(user)=>{
-        return new Promise(async(resolve, reject)=>{
+    inscription:(user,token)=>{
 
-               try {
+      return new Promise(async(resolve, reject)=>{
 
-                 let indicatif = "221";
-                 await axios.post(process.env.FREE_API,
-                  {
-                    from:process.env.SMS_SENDER,
-                    to:indicatif + user.phone,
-                    text:'Voici votre code de validation wefid : ' + user.code
-                  },
-                  {
-                    headers:{
-                      Authorization:`Basic ${process.env.FREE_TOKEN}`
-                    }
-                  }).then(resp=>{
-                    resolve(resp);
-                  }).catch((err)=>{
-                    console.log(err);
-                 })
-                
-               } catch (error) {
-                 reject(error);
-               }     
-        });
+        try {
+
+          const response = await axios.post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B221771852694/requests",
+          {
+            "outboundSMSMessageRequest":{
+              "address":`tel:+221${user.phone}`,
+              "senderAddress":"tel:+221771852694",
+              "senderName": "Wefid",
+              "outboundSMSTextMessage":{
+                  "message":'Voici votre code de validation wefid : ' + user.code
+              }
+            }
+          },
+          {
+              headers:{ Authorization:`Bearer ${token}`}      
+          });
+
+          console.log("Response", response);
+          resolve(response);
+        } catch (error) {
+          reject(error);
+        }
+
+      })
     },
-    reset:(user, code)=>{
-        return new Promise(async(resolve, reject)=>{
 
+    reset:(user, code, token)=>{
 
-          try {
+      return new Promise(async(resolve, reject)=>{
 
-            let indicatif = "221";
-            await axios.post(process.env.FREE_API,
-             {
-               from:process.env.SMS_SENDER,
-               to:indicatif + user.phone,
-               text:'Bienvenue sur WEFID, Une demande a été faite pour réinitialiser le mot de passe de votre compte associé à ce numéro sur wefid \n\n Code de validation : ' + code,
-             },
-             {
-               headers:{
-                 Authorization:`Basic ${process.env.FREE_TOKEN}`
-               }
-             }).then(resp=>{
-               resolve(resp);
-             }).catch((err)=>{
-               console.log(err);
-            })
-           
-          } catch (error) {
-            reject(error);
-          } 
-               
-        });
+        try {
+
+          const response = await axios.post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B221771852694/requests",
+          {
+            "outboundSMSMessageRequest":{
+              "address":`tel:+221${user.phone}`,
+              "senderAddress":"tel:+221771852694",
+              "senderName": "Wefid",
+              "outboundSMSTextMessage":{
+                  "message":'Bienvenue sur WEFID, Une demande a été faite pour réinitialiser le mot de passe de votre compte associé à ce numéro sur wefid \n\n Code de validation : ' + code
+              }
+            }
+          },
+          {
+              headers:{ Authorization:`Bearer ${token}`}      
+          });
+
+          console.log("Response", response);
+          resolve(response);
+        } catch (error) {
+          reject(error);
+        }
+
+      })
+
+    },
+
+    testMessage:(token)=>{
+
+      return new Promise(async(resolve, reject)=>{
+
+        try {
+
+          const response = await axios.post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B221771852694/requests",
+          {
+            "outboundSMSMessageRequest":{
+              "address":"tel:+221773017867",
+              "senderAddress":"tel:+221771852694",
+              "senderName": "Wefid",
+              "outboundSMSTextMessage":{
+                  "message":"Bonjour Alves comment tu vas?"
+              }
+            }
+          },
+          {
+              headers:{ Authorization:`Bearer ${token}`}      
+          });
+
+          console.log("Response", response);
+          resolve(response);
+        } catch (error) {
+          reject(error);
+        }
+
+      })
     }
     
 

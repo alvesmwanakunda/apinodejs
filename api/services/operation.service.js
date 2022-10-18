@@ -272,6 +272,7 @@ module.exports ={
                        status: 'error'
                     });
                  }else{
+                    global.socket.broadcast.emit('get_depense', depense.point);
                     resolve({
                        depense: depense,
                        status: 'success'

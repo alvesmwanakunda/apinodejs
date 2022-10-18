@@ -158,7 +158,43 @@
                     }
                 })
 
+            },
+
+            getCountMessageUser:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        let message = MessageApp.find({client: req.params.id,lire:false});
+
+                        message.count(function(err, count){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    depense:err
+                                })
+    
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    depense: count
+                                })
+                            }
+                        })    
+                    }
+                    else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+
+                })   
+
             }
+
         }
     }
 

@@ -11,6 +11,8 @@ const { ObjectId } = require('mongodb');
      var excelToJson = require('convert-excel-to-json');
      var fs = require("fs");
      var operationService = require('../services/operation.service');
+     const axios = require("axios");
+
 
 
      module.exports = function(acl, app){
@@ -109,7 +111,7 @@ const { ObjectId } = require('mongodb');
                                         });
                                         code = code[0];
                                         user.code = code;
-                                        user.save(function(err, user){
+                                        user.save(async function(err, user){
                                             if(err)
                                             return res.status(500).json({
                                                 success: false,
@@ -119,7 +121,19 @@ const { ObjectId } = require('mongodb');
                                             if(client){
                                                 operationService.addOperationByEntrepise(req.params.id, client._id,user);
                                             }
-                                            clientService.inscriptionSms(user, password);
+                                            let grant = `grant_type=client_credentials`;
+                                            const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                                            {
+                                            headers:{
+                                                Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                                            'Content-Type': 'application/x-www-form-urlencoded'
+                                            }
+                                            
+                                            });
+
+                                            if(response.data.access_token){
+                                                clientService.inscriptionSms(user, password,response.data.access_token);
+                                            }
                                             res.json({
                                                 success: true,
                                                 message:user
@@ -262,15 +276,28 @@ const { ObjectId } = require('mongodb');
                                         });
                                         code = code[0];
                                         user.code = code;
-                                        user.save(function(err, user){
+                                        user.save(async function(err, user){
                                             if(err)
                                             return res.status(500).json({
                                                 success: false,
                                                 message: err
                                             });
                                             client.save(); 
+
+                                            let grant = `grant_type=client_credentials`;
+                                            const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                                            {
+                                            headers:{
+                                                Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                                            'Content-Type': 'application/x-www-form-urlencoded'
+                                            }
                                             
-                                            clientService.inscriptionSmsPhone(user);
+                                            });
+
+                                            if(response.data.access_token){
+                                                clientService.inscriptionSmsPhone(user,response.data.access_token);
+                                            }
+                                            
                                             res.json({
                                                 success: true,
                                                 message:user
@@ -303,7 +330,6 @@ const { ObjectId } = require('mongodb');
                             })
                         }); 
             },
-
 
             sharedAddClient(req, res){ 
 
@@ -401,7 +427,7 @@ const { ObjectId } = require('mongodb');
                                         });
                                         code = code[0];
                                         user.code = code;
-                                        user.save(function(err, user){
+                                        user.save(async function(err, user){
                                             if(err)
                                             return res.status(500).json({
                                                 success: false,
@@ -411,7 +437,20 @@ const { ObjectId } = require('mongodb');
                                             if(client){
                                                 operationService.addOperationByEntrepise(req.params.id, client._id,user);
                                             }
-                                            clientService.inscriptionSms(user,password);
+                                            let grant = `grant_type=client_credentials`;
+                                            const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                                            {
+                                            headers:{
+                                                Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                                            'Content-Type': 'application/x-www-form-urlencoded'
+                                            }
+                                            
+                                            });
+
+                                            if(response.data.access_token){
+                                                clientService.inscriptionSms(user,password,response.data.access_token);
+                                            }
+                                           
                                             res.json({
                                                 success: true,
                                                 message:user
@@ -596,7 +635,7 @@ const { ObjectId } = require('mongodb');
                                                             });
                                                             code = code[0];
                                                             user.code = code;
-                                                            user.save(function(err, user){
+                                                            user.save(async function(err, user){
                                                                 if(err)
                                                                 return res.status(500).json({
                                                                     success: false,
@@ -611,8 +650,21 @@ const { ObjectId } = require('mongodb');
                                                                     numeroClient : codeClient
                                                                 };
                                                                 //console.log("Client sms", client);
-                                                                clientService.saveExcel(client,req.params.id);                                                                
-                                                                clientService.inscriptionSms(user);
+                                                                clientService.saveExcel(client,req.params.id);
+
+                                                                let grant = `grant_type=client_credentials`;
+                                                                const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                                                                {
+                                                                headers:{
+                                                                    Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                                                                'Content-Type': 'application/x-www-form-urlencoded'
+                                                                }
+                                                                
+                                                                });
+
+                                                                if(response.data.access_token){
+                                                                    clientService.inscriptionSms(user,response.data.access_token);
+                                                                }
                                                                   
                                                             }) 
 
@@ -708,6 +760,7 @@ const { ObjectId } = require('mongodb');
                 })
 
             },
+
             deleteManyClient:function(req,res){
 
                 acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
