@@ -9,7 +9,13 @@
         message:{
             type: Schema.ObjectId,
             ref: "MessageClient",
-            required: true
+            required: false
+        },
+
+        promotion:{
+          type:Schema.ObjectId,
+          ref:"Promotions",
+          required: false
         },
 
         client:{
@@ -34,6 +40,10 @@
         lire:{
             type:Boolean,
             default:false
+        },
+        type:{
+            type: String,
+            required:false
         }
     });
     module.exports={

@@ -16,10 +16,10 @@
             ref: "Entreprises",
             required: true
         },
-        types:[{
+        types:{
             type:String,
             required:false
-        }],
+        },
         sms:{
             type:String,
             required:false

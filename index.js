@@ -145,11 +145,23 @@ function initApp(){
 
       functionsCron.AnniversaireClientApp();
       functionsCron.RelancerApp();
+      functionsCron.AnniversaireClientSms();
+      functionsCron.RelancerSms();
+      functionsCron.PromotionApp();
+      functionsCron.PromotionAppSms();
+      functionsCron.PromotionAppWefid();
+      functionsCron.PromotionSmsWefid();
       console.log("Cron application");
   }); 
               
   var server = app.listen(port,()=>{
       console.log(`Now listening on port ${port}`);
+      /*var now = new Date();
+      let debut = now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate();
+      console.log("Date", debut);
+      if(debut==="2022-11-3"){
+        console.log("Date 1", debut);
+      }*/
   });
   
   /*
