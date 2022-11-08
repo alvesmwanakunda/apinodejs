@@ -111,7 +111,7 @@
                                 })
                             }
 
-                        }).populate('message');
+                        }).populate('message').populate('promotion');
 
                     }else{
                         return res.status(401).json({
