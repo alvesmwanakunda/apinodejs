@@ -27,6 +27,66 @@ module.exports = {
                 }
             })
         })
-    }
+    },
+
+    scannerConnexion:(user)=>{
+
+        return new Promise(async(resolve,reject)=>{
+
+            try {
+
+                let connexion = await Connexion.findOne({user:new ObjectId(user)}).sort({connexion:-1});
+                connexion.scanne = parseInt(connexion.scanne) + parseInt(1);
+                Connexion.findOneAndUpdate({_id:connexion._id},connexion,{new:true},function(error, connexion){
+
+                    if(error){
+                        reject({
+                            connexion: error,
+                            status: 'error'
+                         });
+                    }else{
+                        resolve({
+                            connexion: connexion,
+                            status: 'success'
+                         });
+                    }
+
+                })
+            } catch (error) {
+                reject(error);
+            }
+        })
+    },
+
+    recompenseConnexion:(user)=>{
+
+        return new Promise(async(resolve,reject)=>{
+
+            try {
+
+                let connexion = await Connexion.findOne({user:new ObjectId(user)}).sort({connexion:-1});
+                connexion.recompense = parseInt(connexion.recompense) + parseInt(1);
+                Connexion.findOneAndUpdate({_id:connexion._id},connexion,{new:true},function(error, connexion){
+
+                    if(error){
+                        reject({
+                            connexion: error,
+                            status: 'error'
+                         });
+                    }else{
+                        resolve({
+                            connexion: connexion,
+                            status: 'success'
+                         });
+                    }
+
+                })
+            } catch (error) {
+                reject(error);
+            }
+        })
+    },
+
+    
 
 }

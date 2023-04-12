@@ -273,7 +273,10 @@
          .post(Ctrl.testNotification);
          
       app.route('/test/message')
-         .get(Ctrl.messageTest)   
+         .get(Ctrl.messageTest)  
+         
+      app.route('/delete/compte')
+         .get(Ctrl.deleteCompte)   
   }
   
 })();

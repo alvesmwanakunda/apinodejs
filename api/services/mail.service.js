@@ -1,5 +1,8 @@
 var nodemailer = require('nodemailer');
 //var sgMail = require('@sendgrid/mail');
+var Entrepise = require('../models/entreprises.model').EntrepriseModel;
+var ObjectId = require('mongoose').Types.ObjectId;
+
 module.exports = {
 
 
@@ -55,7 +58,11 @@ module.exports = {
         });
     },
     reset:(user)=>{
-        return new Promise((resolve, reject)=>{
+        return new Promise(async(resolve, reject)=>{
+
+
+            let entreprise = await Entrepise.findOne({createur:new ObjectId(user._id)})
+
 
             try {
 
@@ -80,7 +87,7 @@ module.exports = {
                 let message = {
                     to: user.email,
                     subject: 'Réinitialisation de mot de passe Wefid',
-                    html: 'Bonjour, <b>' + user.email + '</b> <br />Nous avons bien reçu une demande de récupération de votre mot de passe WeFid. Pour définir un nouveau mot de passe, veuillez cliquer sur le lien suivant: <a href="' + process.env.lostpassword + user.code + '&email=' + user.email + '">' + process.env.lostpassword + user.code + '&email=' + user.email + '</a> <br /><br /> Si vous n\'êtes pas à l\'origine de cette demande de récupération de votre mot de passe, veuillez ignorer ce message.</br> <p style="text-align:center">L\'équipe WeFid</p>',
+                    html: 'Bonjour <b>' + entreprise.nom + ',</b> <br />Nous avons bien reçu une demande de récupération de votre mot de passe WeFid. Pour définir un nouveau mot de passe, veuillez cliquer sur le lien suivant: <a href="' + process.env.lostpassword + user.code + '&email=' + user.email + '">' + process.env.lostpassword + user.code + '&email=' + user.email + '</a> <br /><br /> Si vous n\'êtes pas à l\'origine de cette demande de récupération de votre mot de passe, veuillez ignorer ce message.</br> <p style="text-align:center">L\'équipe WeFid</p>',
                 };
                 transporter.sendMail(message, (error, user)=>{
                     if(error){

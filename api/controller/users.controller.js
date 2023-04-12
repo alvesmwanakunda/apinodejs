@@ -599,6 +599,7 @@
                 }
 
                 req.body.role = 'agent';
+                req.body.valid = true;
                
                 var user = new User(req.body);
 
@@ -968,6 +969,36 @@
                         message: error
                     }) 
                   } 
+            },
+
+            deleteCompte:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+                    if(aclres){
+
+                        User.findOneAndUpdate({_id:req.decoded.id},{valid:false},{new:true},function(err, user){
+                            if(err){
+                             return res.status(500).json({
+                                 success:false,
+                                 message: err
+                             });
+                            }
+                            else{
+                             res.json({
+                                 success:true,
+                                 message:user
+                             });
+                            }
+                         });
+                    }
+                    else{
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+                    }
+                })    
+
             }
 
             

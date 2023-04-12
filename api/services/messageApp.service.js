@@ -216,6 +216,9 @@ module.exports ={
                             if(err){
                                 console.log("Erreur", err);
                             }else{
+                                if(global.socket!=undefined){
+                                    global.socket.broadcast.emit('message_visite', message);
+                                }
                                 resolve({
                                     message: message,
                                     status: 'success'
@@ -237,6 +240,9 @@ module.exports ={
                             if(err){
                                 console.log("Erreur", err);
                             }else{
+                                if(global.socket!=undefined){
+                                    global.socket.broadcast.emit('message_visite', message);
+                                }
                                 resolve({
                                     message: message,
                                     status: 'success'
@@ -257,6 +263,9 @@ module.exports ={
                             if(err){
                                 console.log("Erreur", err);
                             }else{
+                                if(global.socket!=undefined){
+                                    global.socket.broadcast.emit('message_visite', message);
+                                }
                                 resolve({
                                     message: message,
                                     status: 'success'
@@ -314,6 +323,9 @@ module.exports ={
                             if(err){
                                 console.log("Erreur", err);
                             }else{
+                                if(global.socket!=undefined){
+                                    global.socket.broadcast.emit('message_visite', message);
+                                }
                                 resolve({
                                     message: message,
                                     status: 'success'
@@ -335,6 +347,9 @@ module.exports ={
                             if(err){
                                 console.log("Erreur", err);
                             }else{
+                                if(global.socket!=undefined){
+                                    global.socket.broadcast.emit('message_visite', message);
+                                }
                                 resolve({
                                     message: message,
                                     status: 'success'
@@ -355,6 +370,9 @@ module.exports ={
                             if(err){
                                 console.log("Erreur", err);
                             }else{
+                                if(global.socket!=undefined){
+                                    global.socket.broadcast.emit('message_visite', message);
+                                }
                                 resolve({
                                     message: message,
                                     status: 'success'

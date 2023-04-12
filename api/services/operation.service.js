@@ -9,6 +9,8 @@ var AvoirEncaisse = require('../models/avoirEncaisse.model').AvoirEncaisseModel;
 var AvoirDepense = require('../models/avoirDepense.model').AvoirDepenseModel;
 var Client = require('../models/clients.model').ClientsModel;
 var ListAvoir = require('../models/listAvoir.model').ListAvoirModel;
+var socketInit = require('../../socket');
+var Historiques = require('../models/historiques.model').HistoriquesModel;
 
 module.exports ={
 
@@ -272,7 +274,10 @@ module.exports ={
                        status: 'error'
                     });
                  }else{
-                    global.socket.broadcast.emit('get_depense', depense.point);
+                    if(global.socket!=undefined){
+                        global.socket.broadcast.emit('get_depense', depense.point);
+                     }
+                   
                     resolve({
                        depense: depense,
                        status: 'success'
@@ -424,7 +429,59 @@ module.exports ={
             })
 
         })
-    }
+    },
+
+    addClientToEntreprise:(idClient,idEntreprise)=>{
+
+        return new Promise((resolve,reject)=>{
+
+
+          Client.findOneAndUpdate({_id:idClient},{$push:{entreprise:idEntreprise}},function(err,data){
+
+            if(err){
+                reject({
+                   body: err,
+                   status: 'error'
+                });
+            }else{
+              resolve({
+                 body: data,
+                 status: 'success'
+              });
+            }
+
+        });
+
+        })
+
+    },
+
+    addHistorique:(entreprise,client)=>{
+
+        return new Promise((resolve,reject)=>{
+
+            let historique = new Historiques();
+            historique.creation = new Date();
+            historique.client = new ObjectId(client);
+            historique.entreprise = new ObjectId(entreprise),
+           
+
+            historique.save(function(err,historique){
+
+                if(err){
+                reject({
+                   avoir: err,
+                   status: 'error'
+                });
+             }else{
+                resolve({
+                   historique: historique,
+                   status: 'success'
+                });
+             }
+            })
+        })
+    },
 
 
 

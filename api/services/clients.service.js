@@ -66,7 +66,7 @@ module.exports = {
                   headers:{ Authorization:`Bearer ${token}`}      
               });
     
-              console.log("Response", response);
+              //console.log("Response", response);
               resolve(response);
             } catch (error) {
               reject(error);
@@ -88,7 +88,7 @@ module.exports = {
                   "senderAddress":"tel:+221771852694",
                   "senderName": "Wefid",
                   "outboundSMSTextMessage":{
-                      "message":'Bonjour,Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur, Wefid. \n\n Votre identifiant de connexion est le suivant: ' +user.phone+ '.\n\n Votre mot de passe temporaire est : ' +password,
+                      "message":'Bonjour,Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur, Wefid. \n\n Votre identifiant de connexion est le suivant: ' +user.phone+ '.\n\n Votre mot de passe temporaire est : ' +user.password,
                   }
                 }
               },
@@ -96,7 +96,7 @@ module.exports = {
                   headers:{ Authorization:`Bearer ${token}`}      
               });
     
-              console.log("Response", response);
+              //console.log("Response", response);
               resolve(response);
             } catch (error) {
               reject(error);

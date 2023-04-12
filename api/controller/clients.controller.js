@@ -1,5 +1,3 @@
-const { ObjectId } = require('mongodb');
-
 (function(){
     "use strict";
      var User = require('../models/users.model').UserModel;
@@ -12,7 +10,7 @@ const { ObjectId } = require('mongodb');
      var fs = require("fs");
      var operationService = require('../services/operation.service');
      const axios = require("axios");
-
+     const { ObjectId } = require('mongodb');
 
 
      module.exports = function(acl, app){
@@ -574,132 +572,136 @@ const { ObjectId } = require('mongodb');
                                                 success: false,
                                                 message: err
                                             });
-                                        if(!userexists){
+                                        if(clientInfo.emailorphone.length==9){
 
-                                            if(Isemail.validate(clientInfo.emailorphone.toString())){
-                                                console.log("Ici");
-                                                query = {
-                                                    email:clientInfo.emailorphone
-                                                };
-                                            }else{
-                                                query ={
-                                                    phone:clientInfo.emailorphone
-                                                };
-                                            }
+                                            if(!userexists){
 
-                                            if(query.phone){
-                                              req.body.phone = clientInfo.emailorphone;
-                                              req.body.email=undefined;
-                                            }else if (query.email){
-                                             req.body.email = clientInfo.emailorphone;
-                                             req.body.phone = undefined;
-                                            }
-                                            req.body.nom = clientInfo.nom;
-                                            req.body.prenom = clientInfo.prenom;
-                                            req.body.role = 'user';
-                                            var codeClient = Codes.generate({
-                                                length:5,
-                                                count:1,
-                                                charset: Codes.charset("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-                                            });
-                                            codeClient = codeClient[0];
-
-                                            var user = new User(req.body);
-                                            //console.log("User ", user);
-                                            
-                                            User.remove(query, function(err){
-
-                                                   //console.log("Erreur", err);
-
-                                                    var password = Codes.generate({
-                                                    length:8,
+                                                if(Isemail.validate(clientInfo.emailorphone.toString())){
+                                                    console.log("Ici");
+                                                    query = {
+                                                        email:clientInfo.emailorphone
+                                                    };
+                                                }else{
+                                                    query ={
+                                                        phone:clientInfo.emailorphone
+                                                    };
+                                                }
+    
+                                                if(query.phone){
+                                                  req.body.phone = clientInfo.emailorphone;
+                                                  req.body.email=undefined;
+                                                }else if (query.email){
+                                                 req.body.email = clientInfo.emailorphone;
+                                                 req.body.phone = undefined;
+                                                }
+                                                req.body.nom = clientInfo.nom;
+                                                req.body.prenom = clientInfo.prenom;
+                                                req.body.role = 'user';
+                                                var codeClient = Codes.generate({
+                                                    length:5,
                                                     count:1,
                                                     charset: Codes.charset("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-                                                    });
-                                                    password = password[0];
-                                                    
-                                                    user.password = crypto.createHash('md5').update(password).digest("hex");
-
-                                                    user.save(function(err, user){
-                                                        if(err)
-                                                            return res.status(500).json({
-                                                                success: false,
-                                                                message: err
-                                                            });
-                                                        if(user.phone){
-
-                                                            var code = Codes.generate({
-                                                                length: 4,
-                                                                count: 1,
-                                                                charset: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                                            });
-                                                            code = code[0];
-                                                            user.code = code;
-                                                            user.save(async function(err, user){
-                                                                if(err)
+                                                });
+                                                codeClient = codeClient[0];
+    
+                                                var user = new User(req.body);
+                                                //console.log("User ", user);
+                                                
+                                                User.remove(query, function(err){
+    
+                                                       //console.log("Erreur", err);
+    
+                                                        var password = Codes.generate({
+                                                        length:8,
+                                                        count:1,
+                                                        charset: Codes.charset("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+                                                        });
+                                                        password = password[0];
+                                                        
+                                                        user.password = crypto.createHash('md5').update(password).digest("hex");
+    
+                                                        user.save(function(err, user){
+                                                            if(err)
                                                                 return res.status(500).json({
                                                                     success: false,
                                                                     message: err
                                                                 });
-                                                                client={
-                                                                    genre:clientInfo.genre,
-                                                                    adresse:clientInfo.adresse,
-                                                                    dateCreated: new Date(),
-                                                                    user : user._id,
-                                                                    entreprise : req.params.id,
-                                                                    numeroClient : codeClient
-                                                                };
-                                                                //console.log("Client sms", client);
-                                                                clientService.saveExcel(client,req.params.id);
-
-                                                                let grant = `grant_type=client_credentials`;
-                                                                const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
-                                                                {
-                                                                headers:{
-                                                                    Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
-                                                                'Content-Type': 'application/x-www-form-urlencoded'
-                                                                }
-                                                                
+                                                            if(user.phone){
+    
+                                                                var code = Codes.generate({
+                                                                    length: 4,
+                                                                    count: 1,
+                                                                    charset: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                                                 });
-
-                                                                if(response.data.access_token){
-                                                                    clientService.inscriptionSms(user,response.data.access_token);
-                                                                }
-                                                                  
-                                                            }) 
-
-                                                        }else{
-                                                            var code = Codes.generate({
-                                                            length:128,
-                                                            count:1,
-                                                            charset: Codes.charset("alphanumeric")
-                                                            });
-                                                            code = code[0];
-                                                            user.code = code;
-                                                            user.save(function(err, user){
-                                                                if(err)
-                                                                return res.status(500).json({
-                                                                    success: false,
-                                                                    message: err
+                                                                code = code[0];
+                                                                user.code = code;
+                                                                user.save(async function(err, user){
+                                                                    if(err)
+                                                                    return res.status(500).json({
+                                                                        success: false,
+                                                                        message: err
+                                                                    });
+                                                                    client={
+                                                                        genre:clientInfo.genre,
+                                                                        adresse:clientInfo.adresse,
+                                                                        dateCreated: new Date(),
+                                                                        user : user._id,
+                                                                        entreprise : req.params.id,
+                                                                        numeroClient : codeClient
+                                                                    };
+                                                                    //console.log("Client sms", client);
+                                                                    clientService.saveExcel(client,req.params.id);
+    
+                                                                    let grant = `grant_type=client_credentials`;
+                                                                    const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                                                                    {
+                                                                    headers:{
+                                                                        Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                                                                    'Content-Type': 'application/x-www-form-urlencoded'
+                                                                    }
+                                                                    
+                                                                    });
+    
+                                                                    if(response.data.access_token){
+                                                                        clientService.inscriptionSms(user,password,response.data.access_token);
+                                                                    }
+                                                                      
+                                                                }) 
+    
+                                                            }else{
+                                                                var code = Codes.generate({
+                                                                length:128,
+                                                                count:1,
+                                                                charset: Codes.charset("alphanumeric")
                                                                 });
-                                                                client={
-                                                                    genre:clientInfo.genre,
-                                                                    adresse:clientInfo.adresse,
-                                                                    dateCreated: new Date(),
-                                                                    user : user._id,
-                                                                    entreprise : req.params.id,
-                                                                    numeroClient : codeClient
-                                                                };
-                                                                //console.log("Client email", client);
-                                                                clientService.saveExcel(client,req.params.id);
-                                                                clientService.inscriptionClient(user,password);
-                                                                   
-                                                            }) 
-                                                        }   
-                                                    });
-                                            });
+                                                                code = code[0];
+                                                                user.code = code;
+                                                                user.save(function(err, user){
+                                                                    if(err)
+                                                                    return res.status(500).json({
+                                                                        success: false,
+                                                                        message: err
+                                                                    });
+                                                                    client={
+                                                                        genre:clientInfo.genre,
+                                                                        adresse:clientInfo.adresse,
+                                                                        dateCreated: new Date(),
+                                                                        user : user._id,
+                                                                        entreprise : req.params.id,
+                                                                        numeroClient : codeClient
+                                                                    };
+                                                                    //console.log("Client email", client);
+                                                                    clientService.saveExcel(client,req.params.id);
+                                                                    clientService.inscriptionClient(user,password);
+                                                                       
+                                                                }) 
+                                                            }   
+                                                        });
+                                                });
+                                            } 
+
                                         }    
-
+                                           
                                     });
                             }
 
