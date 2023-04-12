@@ -3,6 +3,8 @@ var twilio = require("twilio");
 var Client = require('../models/clients.model').ClientsModel;
 var ObjectId = require('mongoose').Types.ObjectId;
 var operationService = require('../services/operation.service');
+const axios = require("axios");
+
 
 
 module.exports = {
@@ -43,62 +45,64 @@ module.exports = {
         });
     },
 
-    inscriptionSms:(user,password)=>{
+    inscriptionSms:(user,password, token)=>{
 
-        return new Promise((resolve, reject)=>{
+        return new Promise(async(resolve, reject)=>{
 
             try {
-
-                let indicatif = "+221";
-                  var twilioclient = new twilio(process.env.accountSid, process.env.authToken);
-
-                  twilioclient.messages.create({
-                      body: 'Bonjour, \n\n Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur,Wefid. \n\n Votre identifiant de connexion est le suivant: ' + user.phone +'.\n\n Votre mot de passe temporaire est : ' +password,
-                      to: indicatif + user.phone,
-                      from: process.env.twiliofrom
-                    })
-                    .then((message) => {
-                      resolve(message);  
-                    }).catch((err) => {
-                      console.log(err);
-                    });
-                
+    
+              const response = await axios.post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B221771852694/requests",
+              {
+                "outboundSMSMessageRequest":{
+                  "address":`tel:+221${user.phone}`,
+                  "senderAddress":"tel:+221771852694",
+                  "senderName": "Wefid",
+                  "outboundSMSTextMessage":{
+                      "message":'Bonjour, \n\n Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur,Wefid. \n\n Votre identifiant de connexion est le suivant: ' + user.phone +'.\n\n Votre mot de passe temporaire est : ' +password,
+                  }
+                }
+              },
+              {
+                  headers:{ Authorization:`Bearer ${token}`}      
+              });
+    
+              //console.log("Response", response);
+              resolve(response);
             } catch (error) {
-                reject(error);
+              reject(error);
             }
-
-                  
-        });
-
+    
+        })
     },
 
-    inscriptionSmsPhone:(user)=>{
+    inscriptionSmsPhone:(user, token)=>{
 
-        return new Promise((resolve, reject)=>{
+        return new Promise(async(resolve, reject)=>{
 
             try {
-
-                let indicatif = "+221";
-                  var twilioclient = new twilio(process.env.accountSid, process.env.authToken);
-
-                  twilioclient.messages.create({
-                      body: 'Bonjour,Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur, Wefid. \n\n Votre identifiant de connexion est le suivant: ' +user.phone,
-                      to: indicatif + user.phone,
-                      from: process.env.twiliofrom
-                    })
-                    .then((message) => {
-                      resolve(message);  
-                    }).catch((err) => {
-                      console.log(err);
-                    });
-                
+    
+              const response = await axios.post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B221771852694/requests",
+              {
+                "outboundSMSMessageRequest":{
+                  "address":`tel:+221${user.phone}`,
+                  "senderAddress":"tel:+221771852694",
+                  "senderName": "Wefid",
+                  "outboundSMSTextMessage":{
+                      "message":'Bonjour,Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur, Wefid. \n\n Votre identifiant de connexion est le suivant: ' +user.phone+ '.\n\n Votre mot de passe temporaire est : ' +user.password,
+                  }
+                }
+              },
+              {
+                  headers:{ Authorization:`Bearer ${token}`}      
+              });
+    
+              //console.log("Response", response);
+              resolve(response);
             } catch (error) {
-                reject(error);
+              reject(error);
             }
-
-                  
-        });
-
+    
+        })
     },
 
     listClientByEntreprise:(idEntreprise)=>{
@@ -148,12 +152,13 @@ module.exports = {
         });
     },
 
-    saveExcel:(user)=>{
+    saveExcel:(user, idEntreprise)=>{
 
         return new Promise((resolve, reject)=>{
 
             let client = new Client(user);
             //console.log("User Ici", user);
+            //console.log("Entreprise Ici", idEntreprise);
 
             client.save(function(err,client){
 
@@ -165,7 +170,7 @@ module.exports = {
                 });
              }else{
 
-                operationService.addOperationByEntrepise(client.entreprise, client._id,client.user); 
+                operationService.addOperationByEntrepise(idEntreprise, client._id,client.user); 
                 resolve({
                    client: client,
                    status: 'success'
@@ -176,6 +181,7 @@ module.exports = {
 
         });
     },
+
     deleteClientToEntreprise:(idClient,idEntreprise)=>{
 
 
@@ -198,6 +204,45 @@ module.exports = {
             });
 
         })
+    },
+
+    updateClient:(user,genre,adresse,age)=>{
+
+        return new Promise(async(resolve,reject)=>{
+
+            let client = await Client.findOne({user:new ObjectId(user)});
+            console.log("Age", age);
+            try {
+
+                client.genre = genre;
+                client.adresse = adresse;
+                client.dateNaissance = age;
+
+                if(age){
+                    //console.log("Date naissance", req.body.age);
+                    client.day = new Date(age).getDate();
+                    client.month = new Date(age).getMonth()+1;
+                }
+
+
+
+                Client.findOneAndUpdate({_id:client._id},client,{new:true},function(err, user){
+                    if(err){
+                       console.log("Erreur update client", err)
+                    }else{
+                        resolve({
+                            body: user,
+                            status: 'success'
+                         });
+                    } 
+                 });
+            } catch (error) {
+                reject(error);
+            }
+
+
+
+        });
     }
 
 

@@ -3,6 +3,8 @@
     'use strict';
     var Cadeau = require('../models/cadeau.model').CadeauModel;
     var Operation = require('../models/operation.model').OperationModel;
+    var CadeauClient = require('../models/cadeauClient.model').CadeauClientModel;
+
     module.exports = function(acl,app){
 
         return{
@@ -12,6 +14,15 @@
                     if(aclres){
 
                         let cadeau = new Cadeau(req.body);
+                        
+                        if(!req.body.facture){
+                            cadeau.facture=false;
+                        }
+                        if(!req.body.produit){
+                            cadeau.produit=null;
+                            cadeau.facture = req.body.facture;
+                          }
+
                         cadeau.entreprise = req.params.id;
                         cadeau.typeCadeau = req.params.type;
                         cadeau.dateCreation = new Date();
@@ -269,11 +280,11 @@
 
                           let operation = await Operation.findOne({user:req.decoded.id,entreprise:req.params.id});
                           //client:{$ne:req.decoded.id}
-                          console.log("Operation", operation);
+                          //console.log("Operation", operation);
 
                           if(operation){
 
-                            Cadeau.find({entreprise:req.params.id,point:{$lte:operation.point},client:{$ne:req.decoded.id}},function(error, cadeau){
+                            Cadeau.find({entreprise:req.params.id,point:{$lte:operation.point}},function(error, cadeau){
 
                                 if(error){
                                     res.status(500).json({
@@ -371,7 +382,91 @@
                     }
                 })
 
+            },
+
+            // Detail web recompense 
+
+            listCadeauWebByUserByEntrepriseByVisite(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                          let operation = await Operation.findOne({user:req.params.id,entreprise:req.params.idEntreprise});
+                          //client:{$ne:req.decoded.id}
+                          //console.log("Operation", operation);
+
+                          if(operation){
+
+                            Cadeau.find({entreprise:req.params.idEntreprise,point:{$lte:operation.point},client:{$ne:req.params.id}},function(error, cadeau){
+
+                                if(error){
+                                    res.status(500).json({
+                                        success:false,
+                                        cadeau:err
+                                    })
+    
+                                }else{
+                                    res.status(200).json({
+                                        success:true,
+                                        cadeau: cadeau
+                                    })
+                                }
+                              }).populate('typesPoint').populate('produit');
+
+                          }else{
+                            res.status(200).json({
+                                success:true,
+                                cadeau: []
+                            })
+                          }
+
+                          
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        }); 
+                    }
+                })
+
+            },
+
+            listCadeauClient:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        CadeauClient.find({client:req.params.id,entreprise:req.params.entreprise},function(error,cadeau){
+
+                            if(error){
+
+                                res.status(500).json({
+                                    success:false,
+                                    message:error
+                                })
+
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    message: cadeau
+                                })
+                            }
+
+                        }).populate('cadeau').populate({path:'cadeau', populate:{path:'produit'}}).populate({path:'cadeau', populate:{path:'typesPoint'}});
+
+                    }
+                    else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+
+                })
             }
+
 
             //Post.aggregate([{$match: {postId: 5}}, {$project: {upvotes: {$size: '$upvotes'}}}])
 

@@ -57,6 +57,14 @@
         dateCreated:{
             type:Date,
             required:false
+        },
+        day:{
+            type:Number,
+            required:false
+        },
+        month:{
+            type:Number,
+            required:false
         }
     });
     module.exports = {

@@ -8,6 +8,9 @@ var Encaisse = require('../models/encaisse.model').EncaisseModel;
 var AvoirEncaisse = require('../models/avoirEncaisse.model').AvoirEncaisseModel;
 var AvoirDepense = require('../models/avoirDepense.model').AvoirDepenseModel;
 var Client = require('../models/clients.model').ClientsModel;
+var ListAvoir = require('../models/listAvoir.model').ListAvoirModel;
+var socketInit = require('../../socket');
+var Historiques = require('../models/historiques.model').HistoriquesModel;
 
 module.exports ={
 
@@ -86,11 +89,11 @@ module.exports ={
     },
 
 
-    deleteOperationToEntreprise: (idClient)=>{
+    deleteOperationToEntreprise: (idClient,idEntreprise)=>{
 
         return new Promise(async(resolve, reject)=>{
 
-            let operation = await OperationModel.findOne({client:idClient});
+            let operation = await OperationModel.findOne({client:idClient,entreprise:idEntreprise});
 
             operation.delete(function(err, operation){
 
@@ -107,6 +110,33 @@ module.exports ={
         })
     },
 
+    deleteMultiOperationEntreprise:(clients, idEntreprise)=>{
+
+        return new Promise(async(resolve, reject)=>{
+
+            OperationModel.deleteMany({
+                entreprise:idEntreprise,
+                client:{$in:clients.map(function(obj){
+                    return new ObjectId(obj.id)
+                  })
+                }
+            }, function(err, operation){
+
+                if(err){
+                    reject(err);
+                }else{
+                    resolve({
+                    body: operation,
+                    status: 'success'
+                    });    
+                }
+
+            })
+
+        })
+
+    },
+
     addCadeauClient:(client,idCadeau,entreprise)=>{
 
         return new Promise((resolve,reject)=>{
@@ -115,7 +145,8 @@ module.exports ={
             cadeau.creation = new Date();
             cadeau.client = new ObjectId(client);
             cadeau.cadeau = new ObjectId(idCadeau);
-            cadeau.entreprise = new ObjectId(entreprise)
+            cadeau.entreprise = new ObjectId(entreprise),
+            cadeau.nombre = 1;
 
             cadeau.save(function(err,cadeau){
 
@@ -132,6 +163,65 @@ module.exports ={
              }
             })
         })
+    },
+
+    updateCadeauClient:(id)=>{
+
+        return new Promise(async(resolve,reject)=>{
+
+          let cadeau = await CadeauClient.findOne({_id:id});
+          cadeau.nombre = parseInt(cadeau.nombre) + parseInt(1);
+
+          try {
+
+            CadeauClient.findOneAndUpdate({_id:new ObjectId(id)},cadeau,{new:true}, function(err,data){
+                if(err){
+                    console.log("Erreur", err);
+                }else{
+                  resolve({
+                     body: data,
+                     status: 'success'
+                  });
+                }
+            });
+              
+          } catch (error) {
+            reject(error);
+          }
+
+        })
+
+    },
+
+    updateCadeau:(id)=>{
+
+        return new Promise(async(resolve,reject)=>{
+
+          let cadeau = await Cadeau.findOne({_id:id});
+
+          if(!cadeau.isCode){
+
+            cadeau.isCode = true;
+            try {
+
+                Cadeau.findOneAndUpdate({_id:new ObjectId(id)},cadeau,{new:true}, function(err,data){
+                    if(err){
+                        console.log("Erreur", err);
+                    }else{
+                      resolve({
+                         body: data,
+                         status: 'success'
+                      });
+                    }
+                });
+                  
+              } catch (error) {
+                reject(error);
+              }
+
+          }
+        })
+
     },
 
     addUserCadeau:(idCadeau,user)=>{
@@ -160,7 +250,7 @@ module.exports ={
         })
     },
 
-    addDepense:(user,entreprise,produit,point)=>{
+    addDepense:(user,entreprise,produit,point,type)=>{
         return new Promise(async(resolve,reject)=>{
 
             let client = await Client.findOne({user:user});
@@ -168,6 +258,7 @@ module.exports ={
             let depense = new Depense();
             depense.creation = new Date();
             depense.user = new ObjectId(user);
+            depense.type = type;
             if(client){
               depense.client = new ObjectId(client._id);
             }
@@ -183,6 +274,10 @@ module.exports ={
                        status: 'error'
                     });
                  }else{
+                    if(global.socket!=undefined){
+                        global.socket.broadcast.emit('get_depense', depense.point);
+                     }
+                   
                     resolve({
                        depense: depense,
                        status: 'success'
@@ -221,12 +316,14 @@ module.exports ={
 
     },
 
-    addAvoirEncaisse:(user,entreprise,montant)=>{
+    addAvoirEncaisse:(user,client,entreprise,montant)=>{
 
         return new Promise((resolve,reject)=>{
 
             let encaisse = new AvoirEncaisse();
+            let listAvoir = new ListAvoir();
             encaisse.user = new ObjectId(user);
+            encaisse.client = new ObjectId(client);
             encaisse.entreprise = new ObjectId(entreprise);
             encaisse.montant = montant;
             encaisse.creation = new Date();
@@ -239,6 +336,13 @@ module.exports ={
                        status: 'error'
                     });
                  }else{
+                    listAvoir.client = new ObjectId(client);
+                    listAvoir.entreprise = new ObjectId(entreprise);
+                    listAvoir.montant = montant;
+                    listAvoir.creation = new Date();
+                    listAvoir.idRef= new ObjectId(encaisse._id);
+                    listAvoir.type="Encaisse"; 
+                    listAvoir.save();
                     resolve({
                        encaisse: encaisse,
                        status: 'success'
@@ -250,16 +354,17 @@ module.exports ={
 
     },
 
-    addAvoirDepense:(user,entreprise,montant)=>{
+    addAvoirDepense:(user,client,entreprise,montant)=>{
 
         return new Promise((resolve,reject)=>{
 
             let depense = new AvoirDepense();
+            let listAvoir = new ListAvoir();
             depense.user = new ObjectId(user);
+            depense.client = new ObjectId(client);
             depense.entreprise = new ObjectId(entreprise);
             depense.montant = montant;
             depense.creation = new Date();
-
             depense.save(function(err,encaisse){
 
                 if(err){
@@ -268,6 +373,13 @@ module.exports ={
                        status: 'error'
                     });
                  }else{
+                    listAvoir.client = new ObjectId(client);
+                    listAvoir.entreprise = new ObjectId(entreprise);
+                    listAvoir.montant = montant;
+                    listAvoir.creation = new Date();
+                    listAvoir.idRef= new ObjectId(depense._id);
+                    listAvoir.type="Depense"; 
+                    listAvoir.save(); 
                     resolve({
                        encaisse: encaisse,
                        status: 'success'
@@ -297,7 +409,79 @@ module.exports ={
             })
 
         })
-    }
+    },
+
+    deletelistAvoirEncaisse:(idAvoir, entreprise)=>{
+        return new Promise(async(resolve, reject)=>{
+
+            let encaisse = await ListAvoir.findOne({idRef:idAvoir, entreprise:entreprise});
+
+            encaisse.delete(function(err, operation){
+
+                if(err){
+                    reject(err);
+                }else{
+                    resolve({
+                    body: operation,
+                    status: 'success'
+                    });    
+                }
+            })
+
+        })
+    },
+
+    addClientToEntreprise:(idClient,idEntreprise)=>{
+
+        return new Promise((resolve,reject)=>{
+
+
+          Client.findOneAndUpdate({_id:idClient},{$push:{entreprise:idEntreprise}},function(err,data){
+
+            if(err){
+                reject({
+                   body: err,
+                   status: 'error'
+                });
+            }else{
+              resolve({
+                 body: data,
+                 status: 'success'
+              });
+            }
+
+        });
+
+        })
+
+    },
+
+    addHistorique:(entreprise,client)=>{
+
+        return new Promise((resolve,reject)=>{
+
+            let historique = new Historiques();
+            historique.creation = new Date();
+            historique.client = new ObjectId(client);
+            historique.entreprise = new ObjectId(entreprise),
+           
+
+            historique.save(function(err,historique){
+
+                if(err){
+                reject({
+                   avoir: err,
+                   status: 'error'
+                });
+             }else{
+                resolve({
+                   historique: historique,
+                   status: 'success'
+                });
+             }
+            })
+        })
+    },
 
 
 

@@ -2,6 +2,7 @@
     'use strict';
      var User = require('../models/users.model').UserModel;
      var Entreprise = require('../models/entreprises.model').EntrepriseModel;
+     var Client = require('../models/clients.model').ClientsModel;
      var crypto  = require('crypto');
      var jwt = require('jsonwebtoken');
      var Encryption = require('../../utils/Encryption');
@@ -14,9 +15,18 @@
      const entrepriseService = require('../services/entreprises.service');
      const clientService = require('../services/clients.service');
      const userService = require('../services/users.service');
+     const tokenService = require('../services/token.service');
      var Isemail = require('isemail');
+     var connexionService= require('../services/connexion.service');
+     var ObjectId = require('mongoose').Types.ObjectId;
+     var TokenModel = require('../models/token.model').TokenModel;
+     var FCM = require('fcm-node');
+     var serverKey = process.env.SERVER_KEY;
+     var fcm = new FCM(serverKey);
+     const axios = require("axios");
+     const queryString = require('node:querystring');
 
-
+    
      module.exports = function(acl){
         return{
 
@@ -86,7 +96,7 @@
                                         code = code[0];
                                         user.code = code;
                                         console.log("Code", code);
-                                        user.save(function(err, user){
+                                        user.save(async function(err, user){
                                             if(err)
                                             return res.status(500).json({
                                                 success: false,
@@ -97,7 +107,17 @@
                                                 entrepriseService.addAvoirToEntreprise(entreprise._id);
                                                 entrepriseService.addTypePoint(entreprise._id);
                                             } 
-                                            smsService.inscription(user);
+                                            let grant = `grant_type=client_credentials`;
+                                            const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                                            {
+                                                    headers:{
+                                                        Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                                                    'Content-Type': 'application/x-www-form-urlencoded'
+                                                    }     
+                                            });
+                                            if(response.data.access_token){
+                                                smsService.inscription(user,response.data.access_token); 
+                                            }
                                             res.json({
                                                 success: true,
                                                 message:user
@@ -137,6 +157,7 @@
                      
                
             },
+
             userExist:function(req, res){
                 User.findOne({email:req.body.email},function(err, result){
                     if(err || !result)
@@ -153,7 +174,9 @@
                        })
                 })
             },
+
             login:function(req,res){
+
                   if(!req.body.emailorphone)
                     return res.send({
                         success: false,
@@ -180,8 +203,10 @@
 
                   //console.log("Query", query);
 
-                  User.findOne(query).exec(function(err, user){
+                  User.findOne(query).exec(async function(err, user){
 
+                      //console.log("User", user);
+                      //console.log("Entreprise", entreprise);
                       //console.log("User", user);
                       
                       if(err)
@@ -203,12 +228,26 @@
 
                       Role.findOne({
                           roles:user.role
-                      }, function(err, role){
+                      }, async function(err, role){
                           if(err)
-                            return res,send({
+                            return res.send({
                                 success: false,
                                 message: err
                             });
+                          if(user.role=="agent"){
+                              let entreprise = await Entreprise.findOne({createur:new ObjectId(user._id)});
+                              if(entreprise){
+                                connexionService.addConnexion(user._id,entreprise._id);
+                              }  
+                          }
+
+                          let tokenUser = await TokenModel.findOne({user:user._id});
+                          if(tokenUser){
+                               tokenService.updateToken(user._id,token);
+                          }else{
+                               tokenService.createToken(user._id,token);
+                          }
+                          //console.log("Token", token);
                           res.json({
                               success: true,
                               message:{
@@ -224,6 +263,7 @@
                       });
                   });
             },
+
             resetPassword:function(req,res){
 
                 //console.log("Body", req.body);
@@ -298,13 +338,25 @@
                         //password = password[0];
                         //user.password = crypto.createHash('md5').update(password).digest("hex");
 
-                        user.save(function(err,user){
+                        user.save(async function(err,user){
                             if(err)
                             return res.status(500).json({
                                 success: false,
                                 message: err
                             });
-                            smsService.reset(user,code,password);  
+
+                            let grant = `grant_type=client_credentials`;
+                            const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                            {
+                                    headers:{
+                                        Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                                       'Content-Type': 'application/x-www-form-urlencoded'
+                                     }
+                                    
+                            });
+                            if(response.data.access_token){
+                                smsService.reset(user,code,password,response.data.access_token); 
+                            }
                             res.json({
                                 success:true,
                                 message:"ok"
@@ -315,6 +367,7 @@
                     
                 });
             },
+
             changePassword:function(req,res){
                 User.findOne({
                     email:req.body.email,
@@ -346,6 +399,7 @@
                     });
                 });
             },
+
             changePasswordCode:function(req,res){
                 User.findOne({
                     phone:req.body.phone,
@@ -377,6 +431,7 @@
                     });
                 });
             },
+
             validcode: function (req, res) {
                 User.findOne({
                     phone: req.body.phone,
@@ -410,6 +465,7 @@
                 });
                 });
             },
+
             validemail: function (req, res) {
                 User.findOne({
                 email: req.body.email,
@@ -444,6 +500,7 @@
                 });
                 });
             },
+
             changePasswordProfil:function(req,res, next){
                 acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
                     if(aclres){
@@ -542,6 +599,7 @@
                 }
 
                 req.body.role = 'agent';
+                req.body.valid = true;
                
                 var user = new User(req.body);
 
@@ -585,14 +643,29 @@
                                 code = code[0];
                                 user.code = code;
                                 console.log("Code", code);
-                                user.save(function(err, user){
-                                    if(err)
-                                    return res.status(500).json({
-                                        success: false,
-                                        message: err
+                                user.save(async function(err, user){
+                                    if(err){
+
+                                        return res.status(500).json({
+                                            success: false,
+                                            message: err
+                                        });
+
+                                    }
+
+                                    let grant = `grant_type=client_credentials`;
+                                    const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                                    {
+                                      headers:{
+                                        Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                                       'Content-Type': 'application/x-www-form-urlencoded'
+                                     }
+                                    
                                     });
+                                    if(response.data.access_token){
+                                      clientService.inscriptionSms(user, password,response.data.access_token);
+                                    }
                                     entrepriseService.addUserToEntreprise(req.params.id,user._id);
-                                    clientService.inscriptionSms(user, password);
                                     res.json({
                                         success: true,
                                         message:user
@@ -658,7 +731,276 @@
                     }
                 })
 
+            },
+
+            getUser:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+                    if(aclres){
+
+                        User.findOne({_id:req.decoded.id}, function(err, user){
+
+                           if(err)
+                            return res.status(500).json({
+                                success:false,
+                                message: err
+                            });
+                          res.json({
+                              success:true,
+                              message:user
+                          });
+
+                        });
+
+                    }else{
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+                    }
+                })
+
+            },
+            
+            updateProfil:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+                    if(aclres){
+
+                        let user = await User.findOne({_id:req.decoded.id});
+
+                        user.nom = req.body.nom,
+                        user.prenom = req.body.prenom,
+                        //console.log("Date naissance", req.body.age);
+
+                        User.findOneAndUpdate({_id:req.decoded.id},user,{new:true},function(err, user){
+                           if(err){
+                            return res.status(500).json({
+                                success:false,
+                                message: err
+                            });
+                           }
+                           else{
+                            res.json({
+                                success:true,
+                                message:user
+                            });
+                            if(user.role=="user"){
+                                clientService.updateClient(req.decoded.id,req.body.genre,req.body.adresse,req.body.age);
+                            }
+                           }
+                        });
+
+                    }else{
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+                    }
+                })
+
+            },
+
+            getUserClient:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+                    if(aclres){
+
+                        Client.findOne({user:req.decoded.id}, function(err, user){
+
+                            //console.log("Token", req.headers.token);
+
+                           if(err)
+                            return res.status(500).json({
+                                success:false,
+                                message: err
+                            });
+                          res.json({
+                              success:true,
+                              message:user
+                          });
+
+                        }).populate("user");
+
+                    }else{
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+                    }
+                })
+
+            },
+
+
+            getAgent:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+                    if(aclres){
+
+                        User.findOne({_id:req.params.id}, function(err, user){
+
+                           if(err)
+                            return res.status(500).json({
+                                success:false,
+                                message: err
+                            });
+                          res.json({
+                              success:true,
+                              message:user
+                          });
+
+                        });
+
+                    }else{
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+                    }
+                })
+
+            },
+            
+            updateProfilAgent:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+                    if(aclres){
+
+                        //console.log("Agent", req.params.id);
+
+                        let user = await User.findOne({_id:req.params.id});
+                        //console.log("Body", req.body);
+
+                        user.nom = req.body.nom,
+                        user.prenom = req.body.prenom,
+                        user.poste = req.body.poste,
+
+                        User.findOneAndUpdate({_id:req.params.id},user,{new:true},function(err, user){
+                           if(err)
+                            return res.status(500).json({
+                                success:false,
+                                message: err
+                            });
+                          res.json({
+                              success:true,
+                              message:user
+                          });
+
+                        });
+
+                    }else{
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+                    }
+                })
+
+            },
+
+            testNotification:function(req,res){
+
+                console.log("server Key", process.env.SERVER_KEY);
+
+                var message = {
+                    to:req.body.token,
+                    collapse_key: 'wefid_app',
+    
+                    notification:{
+                        title: req.body.title,
+                        body: req.body.body,
+                        sound:  "default",
+                        tag:'wefid_app',
+                    }
+                };
+    
+                fcm.send(message, function(err, response){
+                    if(err){
+                        console.log("Something has gone wrong!", err);
+                        res.json({
+                            message: err,
+                            status: 'no'
+                        });
+                    }else{
+                        console.log("Successfully sent with response: ", response);
+                        res.json({
+                            message: response,
+                            status: 'success'
+                        });
+                    }
+                })
+
+
+            },
+
+            messageTest:async function(req,res){
+
+                try {
+
+                    let grant = `grant_type=client_credentials`;
+                    const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                    {
+                      headers:{
+                        Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                       'Content-Type': 'application/x-www-form-urlencoded'
+                     }
+                    
+                    });
+                    //console.log("Response", response.data);
+
+                    if(response.data){
+                        console.log("Token", response.data.access_token);
+                        smsService.testMessage(response.data.access_token);
+                        return res.json({
+                            success: true,
+                            message: response.data
+                        }) 
+
+                    }else{
+
+                        return res.json({
+                            success: false,
+                        }) 
+                    }
+                  } catch (error) {
+                    return res.json({
+                        success: false,
+                        message: error
+                    }) 
+                  } 
+            },
+
+            deleteCompte:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+                    if(aclres){
+
+                        User.findOneAndUpdate({_id:req.decoded.id},{valid:false},{new:true},function(err, user){
+                            if(err){
+                             return res.status(500).json({
+                                 success:false,
+                                 message: err
+                             });
+                            }
+                            else{
+                             res.json({
+                                 success:true,
+                                 message:user
+                             });
+                            }
+                         });
+                    }
+                    else{
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+                    }
+                })    
+
             }
+
             
         };
      };

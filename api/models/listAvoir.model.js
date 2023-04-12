@@ -4,16 +4,11 @@
     var mongoose = require("mongoose");
     var Schema = mongoose.Schema;
 
-    var avoirEncaisseSchema = new Schema({
+    var listAvoirSchema = new Schema({
 
         entreprise:{
             type: Schema.ObjectId,
             ref: "Entreprises",
-            required: true
-        },
-        user:{
-            type: Schema.ObjectId,
-            ref: "Users",
             required: true
         },
         client:{
@@ -28,11 +23,23 @@
         creation:{
             type:Date,
             required:false
+        },
+        type:{
+            type:String,
+            required:false
+        },
+        motif:{
+            type:String,
+            required:false
+        },
+        idRef:{
+            type: Schema.ObjectId,
+            required: false
         }
     });
 
     module.exports={
-        AvoirEncaisseSchema : avoirEncaisseSchema,
-        AvoirEncaisseModel : mongoose.model('AvoirEncaisse',avoirEncaisseSchema)
+        ListAvoirSchema : listAvoirSchema,
+        ListAvoirModel : mongoose.model('ListAvoir',listAvoirSchema)
     }
 })();

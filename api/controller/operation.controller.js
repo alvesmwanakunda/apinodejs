@@ -13,7 +13,15 @@
     var AvoirDepense = require('../models/avoirDepense.model').AvoirDepenseModel;
     var AvoirEncaisse = require('../models/avoirEncaisse.model').AvoirEncaisseModel;
     var operationService = require('../services/operation.service');
+    var connexionService = require('../services/connexion.service');
     var ObjectId = require('mongoose').Types.ObjectId;
+    var ListAvoir = require('../models/listAvoir.model').ListAvoirModel;
+    var MessageClient = require('../models/messageClient.model').MessageClientModel;
+    var messageAppService = require('../services/messageApp.service');
+    var TokenModel = require('../models/token.model').TokenModel;
+    const axios = require("axios");
+
+
 
 
     module.exports = function(acl,app){
@@ -40,6 +48,40 @@
                 })
 
             },
+
+
+            //listeOperationuserAchat
+
+             listOperationUserByAchat:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+                    if(aclres){
+
+                        Operation.find({entreprise:req.params.id,achat:{$ne:0}},function(error, operations){
+
+                            if(error){
+                                res.status(500).json({
+                                    success:false,
+                                    message:error
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    message: operations
+                                })
+                            }
+
+                        }).populate('client').populate('user')
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                           });
+                    }
+                })
+
+             },
+            //Fin
             
             getOperationByClient:function(req,res) {
 
@@ -48,6 +90,29 @@
                     if(aclres){
 
                         let operation = await Operation.findOne({client:req.params.id});
+                        res.json({
+                            success: true,
+                            message: operation
+                        });
+
+                    }else{
+
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+
+                })
+            },
+
+            getOperationByUser:function(req,res) {
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+                 
+                    if(aclres){
+
+                        let operation = await Operation.findOne({user:new ObjectId(req.decoded.id),entreprise:new ObjectId(req.params.id)});
                         res.json({
                             success: true,
                             message: operation
@@ -106,10 +171,13 @@
 
                     if(aclres){
 
-                        let operation = await Operation.findOne({user:req.params.id, entreprise:req.params.entreprise});
-                        let pointVisite = await PointVisite.findOne({entreprise:req.params.entreprise});
-                        let client = await Client.findOne({user:req.params.id});
+                        let operation = await Operation.findOne({user:new ObjectId(req.params.id), entreprise:new ObjectId(req.params.entreprise)});
+                        let pointVisite = await PointVisite.findOne({entreprise:new ObjectId(req.params.entreprise)});
+                        let client = await Client.findOne({user:new ObjectId(req.params.id)});
                         let type="Visites";
+                        let messageClient = await MessageClient.findOne({entreprise:new ObjectId(req.params.entreprise), etat:"Envoyer",type:"Visite",automatique:true});
+                       
+
 
                         if(operation){
 
@@ -118,14 +186,43 @@
                             operation.point = parseInt(operation.point) + parseInt(pointVisite.point),
                             operation.nombreVisite = parseInt(operation.nombreVisite) + 1;
 
-                            Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},function(error,operation){
+                            Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},async function(error,operation){
                                 if(err){
                                     res.status(500).json({
                                         success:false,
                                         message:error
-                                    })
+                                    });
                                 }else{
+                                    if(messageClient){
+
+                                       if(messageClient.typePromotion=="App"){
+                                        messageAppService.createMessageVisite(messageClient._id,client._id);
+                                        if(global.socket!=undefined){
+                                          global.socket.broadcast.emit('message_visite', messageClient);
+                                        }
+                                       }else{
+
+                                        let grant = `grant_type=client_credentials`;
+                                        const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                                        {
+                                          headers:{
+                                            Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                                           'Content-Type': 'application/x-www-form-urlencoded'
+                                         }
+                                        
+                                        });
+                                        if(response.data.access_token){
+                                            messageAppService.notificationSms(req.params.id,messageClient.message,response.data.access_token);
+                                        }
+
+                                      }
+                                    }
                                     operationService.addEncaisse(req.params.id,req.params.entreprise,pointVisite.point,type);
+                                    connexionService.scannerConnexion(req.decoded.id);
+                                    operationService.addHistorique(req.params.entreprise,client._id);
+                                    if(global.socket!=undefined){
+                                        global.socket.broadcast.emit('get_visite', operation.point);
+                                    }
                                     res.status(200).json({
                                         success:true,
                                         message: operation
@@ -133,7 +230,8 @@
                                 }
                             })
 
-                        }else{
+                        }
+                        else{
 
                             let op = new Operation();
                             op.entreprise = new ObjectId(req.params.entreprise);
@@ -148,14 +246,40 @@
                             op.point =pointVisite.point;
                             op.nombreVisite =1;
 
-                            op.save(function(err, operation){
+                            op.save(async function(err, operation){
                                 if(err){
                                     res.status(500).json({
                                         success:false,
                                         message:error
                                     })
                                 }else{
+                                    if(messageClient){
+                                        
+                                        if(messageClient.typePromotion=="App"){
+                                            //messageAppService.notificationPush(tokenUser.token, messageClient.nom, messageClient.message);
+                                            messageAppService.createMessageVisite(messageClient._id,client._id);
+                                            if(global.socket!=undefined){
+                                               global.socket.broadcast.emit('message_visite', messageClient);
+                                            }
+                                           
+                                        }else{
+                                            let grant = `grant_type=client_credentials`;
+                                            const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                                            {
+                                            headers:{
+                                                Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                                            'Content-Type': 'application/x-www-form-urlencoded'
+                                            }
+                                            
+                                            });
+                                            if(response.data.access_token){
+                                                messageAppService.notificationSms(req.params.id,messageClient.message,response.data.access_token);
+                                            }
+                                        }
+                                     }
+                                    operationService.addClientToEntreprise(client._id,req.params.entreprise);
                                     operationService.addEncaisse(req.params.id,req.params.entreprise,pointVisite.point,type);
+                                    operationService.addHistorique(req.params.entreprise,client._id);
                                     res.status(200).json({
                                         success:true,
                                         message: operation
@@ -165,9 +289,7 @@
                             //operationService.addOperationByEntrepise(req.params.entreprise,client._id,req.params.id);
 
                         }
-
-                            
-
+     
                     }else{
                         return res.status(401).json({
                             success: false,
@@ -193,15 +315,18 @@
                         let client = await Client.findOne({user:req.params.id});
 
 
-                        console.log("Montant", req.body.montant);
+                        //console.log("Montant", req.body.montant);
 
                         if(operation){
 
                             if(req.body.montant>=budget.achat){
 
-                                operation.achat = parseInt(operation.achat) + parseInt(budget.point);
+                                let montant = parseInt(req.body.montant/budget.achat);
+                                let point = parseInt(montant)*parseInt(budget.point);
+
+                                operation.achat = parseInt(operation.achat) + parseInt(point);
                                 operation.fin = new Date();
-                                operation.point = parseInt(operation.point) + parseInt(budget.point);
+                                operation.point = parseInt(operation.point) + parseInt(point);
                                 operation.montantAchat = parseInt(operation.montantAchat) + parseInt(req.body.montant);
                                 operation.depense =  parseInt(operation.depense) + parseInt(req.body.montant);
     
@@ -213,7 +338,11 @@
                                         })
                                     }else{
     
-                                        operationService.addEncaisse(req.params.id,req.params.entreprise,budget.point,type);
+                                        operationService.addEncaisse(req.params.id,req.params.entreprise,point,type);
+                                        if(global.socket!=undefined){
+                                            global.socket.broadcast.emit('get_visite', operation.point);
+                                         }
+                                      
                                         res.status(200).json({
                                             success:true,
                                             message: operation
@@ -304,6 +433,7 @@
                                 })
                             }
 
+                            operationService.addClientToEntreprise(client._id,req.params.entreprise);
                         }
                     }else{
 
@@ -328,48 +458,133 @@
                         let operation = await Operation.findOne({user:req.params.id, entreprise:req.params.entreprise});
                         let cadeau = await Cadeau.findOne({_id:new ObjectId(req.params.cadeau)}).populate("typesPoint");
                         let entreprise = await Entreprises.findOne({_id:new ObjectId(req.params.entreprise)});
+                        let type;
+                        let message;
+
 
                         //console.log("Cadeau", cadeau.entreprise);
                         //console.log("Entreprise", entreprise._id);
 
                         if(cadeau.entreprise.equals(entreprise._id)){
 
+                            let cadeauList= await CadeauClient.findOne({client:new ObjectId(operation.client),cadeau:new ObjectId(req.params.cadeau)})
+
                             if(cadeau.typesPoint.nom=="Visites"){
 
-                                operation.visite = parseInt(operation.visite) - parseInt(cadeau.point);
-                                operation.point = parseInt(operation.point) - parseInt(cadeau.point);
+                                if(cadeau.point>operation.visite){
 
-                            }else{
-                                operation.achat = parseInt(operation.achat) - parseInt(cadeau.point);
-                                operation.point = parseInt(operation.point) - parseInt(cadeau.point);
-                            }
-
-                            Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},function(error,operation){
-                                if(err){
-                                    res.status(500).json({
-                                        success:false,
-                                        message:error
-                                    })
-                                }else{
-
-                                    operationService.addCadeauClient(operation.client,cadeau._id,req.params.entreprise);
-                                    operationService.addUserCadeau(cadeau._id,req.params.id);
-                                    operationService.addDepense(req.params.id,req.params.entreprise,cadeau.produit,cadeau.point);
-
+                                    message = "Le point cadeau est supérieur  à votre point visite"
                                     res.status(200).json({
                                         success:true,
-                                        operation: operation,
-                                        message: "Votre code cadeau a été scanné avec succès",
+                                        message: message,
+                                    })
+
+                                }else{
+
+                                    operation.visite = parseInt(operation.visite) - parseInt(cadeau.point);
+                                    operation.point = parseInt(operation.point) - parseInt(cadeau.point);
+                                    type = "Visite";
+
+                                    Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},function(error,operation){
+                                        if(err){
+                                            res.status(500).json({
+                                                success:false,
+                                                message:error
+                                            })
+                                        }
+                                        
+                                        else{
+        
+                                            if(cadeauList){
+                                                 operationService.updateCadeauClient(cadeauList._id);
+                                                 operationService.updateCadeau(cadeau._id);
+                                            }else{
+                                                operationService.addCadeauClient(operation.client,cadeau._id,req.params.entreprise);
+                                                operationService.addUserCadeau(cadeau._id,req.params.id);
+                                                operationService.updateCadeau(cadeau._id);
+                                            }
+                                            operationService.addDepense(req.params.id,req.params.entreprise,cadeau.produit,cadeau.point,type);
+                                            message="Votre code cadeau a été scanné avec succès"
+
+                                            if(global.socket!=undefined){
+                                                global.socket.broadcast.emit('get_visite', operation.point);
+                                             }
+
+                                            connexionService.recompenseConnexion(req.decoded.id);
+        
+                                            res.status(200).json({
+                                                success:true,
+                                                operation: operation,
+                                                message: message,
+                                                point:cadeau.point,
+                                            })
+        
+                                        }
                                     })
 
                                 }
-                            })
+
+                            }else{
+                                if(cadeau.point>operation.achat){
+
+                                    message = "Le point achat est supérieur à votre point achat"
+                                    res.status(200).json({
+                                        success:true,
+                                        message: message,
+                                    })
+
+                                }else{
+
+                                    operation.achat = parseInt(operation.achat) - parseInt(cadeau.point);
+                                    operation.point = parseInt(operation.point) - parseInt(cadeau.point);
+                                    type="Achat";
+
+                                    Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},function(error,operation){
+                                        if(err){
+                                            res.status(500).json({
+                                                success:false,
+                                                message:error
+                                            })
+                                        }
+                                        
+                                        else{
+        
+                                            if(cadeauList){
+                                                 operationService.updateCadeauClient(cadeauList._id);
+                                                 operationService.updateCadeau(cadeau._id);
+                                            }else{
+                                                operationService.addCadeauClient(operation.client,cadeau._id,req.params.entreprise);
+                                                operationService.addUserCadeau(cadeau._id,req.params.id);
+                                                operationService.updateCadeau(cadeau._id);
+                                            }
+                                            operationService.addDepense(req.params.id,req.params.entreprise,cadeau.produit,cadeau.point,type);
+                                            message="Votre code cadeau a été scanné avec succès"
+
+                                            if(global.socket!=undefined){
+                                                global.socket.broadcast.emit('get_visite', operation.point);
+                                             }
+
+                                            connexionService.recompenseConnexion(req.decoded.id);
+                                            res.status(200).json({
+                                                success:true,
+                                                operation: operation,
+                                                message: message,
+                                                point:cadeau.point,
+                                            })
+        
+                                        }
+                                    })
+                                }
+                                
+                            }
 
                         }else{
+
+                            message="Votre code cadeau ne correspond pas a nos codes cadeau"
                             
                             res.status(200).json({
                                 success:true,
-                                message: "Votre code cadeau ne correspond pas a nos codes cadeau"
+                                message: message
                             })
 
                         }
@@ -393,6 +608,7 @@
                     if(aclres){
 
                         let operation = await Operation.findOne({user:req.params.id, entreprise:req.params.entreprise});
+                        let client = await Client.findOne({user:req.params.id});
 
                         if(operation){
                             operation.avoir = parseInt(operation.avoir) + parseInt(req.body.montant);
@@ -406,7 +622,7 @@
                                     })
                                 }else{
 
-                                    operationService.addAvoirEncaisse(req.params.id,req.params.entreprise,req.body.montant);
+                                    operationService.addAvoirEncaisse(req.params.id,client._id,req.params.entreprise,req.body.montant);
                                     res.status(200).json({
                                         success:true,
                                         message: operation
@@ -527,6 +743,7 @@
                         let entreprise = await Entreprises.findOne({_id:req.params.entreprise});
 
                         let operation = Operation.findOne({user:encaisse.user,entreprise:entreprise._id});
+                        let client = await Client.findOne({user:req.params.id});
 
                         operation.avoir = parseInt(operation.avoir) - parseInt(encaisse.montant);
                         operation.fin = new Date();
@@ -541,8 +758,9 @@
                                     })
                                 }else{
     
-                                    operationService.addAvoirDepense(encaisse.user,encaisse.entreprise,encaisse.montant);
+                                    operationService.addAvoirDepense(encaisse.user,client,encaisse.entreprise,encaisse.montant);
                                     operationService.deleteAvoirEncaisse(req.params.id);
+                                    operationService.deletelistAvoirEncaisse(req.params.id,req.params.entreprise);
                                     res.status(200).json({
                                         success:true,
                                         operation: operation,
@@ -676,7 +894,7 @@
                             if(err){
                                 res.status(500).json({
                                     success:false,
-                                    message:error
+                                    message:err
                                 })
                             }else{
                                 res.status(200).json({
@@ -695,6 +913,160 @@
                 })
 
             },
+
+            listCadeauWebEntreprise:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        CadeauClient.find({entreprise:req.params.id},function(err, cadeau){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    message:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    message:cadeau,
+                                })
+                            }
+                        }).populate('cadeau').populate({path:'client', populate:{path:'user',select: 'nom prenom'}});
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+                })
+
+            },
+
+            // List operation cadeau web
+
+            detailListDepenseCadeau:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        CadeauClient.find({cadeau:new ObjectId(req.params.id)},function(err,cadeau){
+
+                            if(err){
+                                console.log("Erreur", err);
+                                res.status(500).json({
+                                    success:false,
+                                    message:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    message:cadeau,
+                                })
+                            }
+
+                        }).populate('cadeau').populate({path:'client', populate:{path:'user',select: 'nom prenom'}})
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+                })
+
+            },
+
+            countNombreCadeau:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        CadeauClient.aggregate([
+                            {$match:{cadeau:new ObjectId(req.params.id)}},
+                            {$group: {_id:null, nombre:{$sum:"$nombre"}}}
+                        ],function(err,cadeau){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    cadeau:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    cadeau: cadeau
+                                })
+                            }
+
+                        })
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+                })
+
+            },
+
+            countPointCadeau:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        let cadeau = await Cadeau.findOne({_id:req.params.id});
+                        var nombre;
+                       
+                        CadeauClient.aggregate([
+                            {$match:{cadeau:new ObjectId(req.params.id)}},
+                            {$group: {_id:null, nombre:{$sum:"$nombre"}}}
+                        ],function(err,cadeauClient){
+
+                            //console.log("Number", cadeauClient);
+
+                            if(!cadeauClient[0]?.nombre){
+                                nombre = 0;
+                            }else{ 
+                              nombre = parseInt(cadeauClient[0].nombre * cadeau.point); 
+                            }
+
+                            //console.log("Nombre", nombre);
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    cadeau:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    cadeau: cadeauClient,
+                                    nombre:nombre,
+                                })
+                            }
+
+                        })
+
+
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+                })
+
+            },
+
+            //Fin
 
             listDepense:function(req,res){
 
@@ -760,27 +1132,30 @@
 
             },
 
+
+
             lengthDepense:function(req,res){
                 acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
 
                     if(aclres){
 
-                        let depense = Depense.find({entreprise: req.params.id,user:req.decoded.id});
-
-                        depense.count(function(err, count){
+                        Depense.aggregate([
+                            {$match:{$and:[{entreprise:new ObjectId(req.params.id)},{user:new ObjectId(req.decoded.id)}]}},
+                            {$group: {_id:null, point:{$sum:"$point"}}}
+                        ],function(err,operation){
 
                             if(err){
                                 res.status(500).json({
                                     success:false,
                                     depense:err
                                 })
-    
                             }else{
                                 res.status(200).json({
                                     success:true,
-                                    depense: count
+                                    depense: operation
                                 })
                             }
+
                         })
 
                     }else{
@@ -799,7 +1174,26 @@
 
                     if(aclres){
 
-                        let encaisse = Encaisse.find({entreprise: req.params.id,user:req.decoded.id});
+                        Encaisse.aggregate([
+                            {$match:{$and:[{entreprise:new ObjectId(req.params.id)},{user:new ObjectId(req.decoded.id)}]}},
+                            {$group: {_id:null, point:{$sum:"$point"}}}
+                        ],function(err,operation){
+
+                            if(err){ 
+                                res.status(500).json({
+                                    success:false,
+                                    encaisse:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    encaisse: operation
+                                })
+                            }
+
+                        })
+
+                        /*let encaisse = Encaisse.find({entreprise: req.params.id,user:req.decoded.id});
 
                         encaisse.count(function(err, count){
 
@@ -815,7 +1209,132 @@
                                     encaisse: count
                                 })
                             }
+                        })*/
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });  
+                    }
+                })
+                
+            },
+
+            // Nombre des depenses par entreprise et utilisateur
+
+            lengthDepenseVisite:function(req,res){
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        Depense.aggregate([
+                            {$match:{$and:[{entreprise:new ObjectId(req.params.id)},{user:new ObjectId(req.decoded.id)},{type:"Visite"}]}},
+                            {$group: {_id:null, point:{$sum:"$point"}}}
+                        ],function(err,operation){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    depense:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    depense: operation
+                                })
+                            }
+
                         })
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });  
+                    }
+                })
+
+            },
+
+            lengthDepenseAchat:function(req,res){
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        Depense.aggregate([
+                            {$match:{$and:[{entreprise:new ObjectId(req.params.id)},{user:new ObjectId(req.decoded.id)},{type:"Achat"}]}},
+                            {$group: {_id:null, point:{$sum:"$point"}}}
+                        ],function(err,operation){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    depense:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    depense: operation
+                                })
+                            }
+
+                        })
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });  
+                    }
+                })
+
+            },
+
+            // Fin Nombre des depenses par entreprise et utilisateur
+
+            lengthEncaisseOperation:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        Operation.aggregate([
+                            {$match:{$and:[{entreprise:new ObjectId(req.params.id)},{user:new ObjectId(req.decoded.id)}]}},
+                            {$group: {_id:null, point:{$sum:"$point"}}}
+                        ],function(err,operation){
+
+                            if(err){ 
+                                res.status(500).json({
+                                    success:false,
+                                    encaisse:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    encaisse: operation
+                                })
+                            }
+
+                        })
+
+                        /*let encaisse = Encaisse.find({entreprise: req.params.id,user:req.decoded.id});
+
+                        encaisse.count(function(err, count){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    encaisse:err
+                                })
+    
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    encaisse: count
+                                })
+                            }
+                        })*/
 
                     }else{
                         return res.status(401).json({
@@ -837,7 +1356,7 @@
 
                         Operation.aggregate([
                             {$match:{entreprise:new ObjectId(req.params.id)}},
-                            {$group: {_id:null, point:{$sum:"$point"}}}
+                            {$group: {_id:null, visite:{$sum:"$visite"}}}
                         ],function(err,operation){
 
                             if(err){
@@ -930,13 +1449,49 @@
 
             },
 
+            listDepenseEntrepriseDuplic:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        Depense.aggregate(
+                            [
+                              {$match:{entreprise:new ObjectId(req.params.id)}},
+                              {$group: {_id:"$client"}}
+                            ],function(err,depense){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    message:error
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    message:depense
+                                })
+                            }
+                        });
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+                })
+
+            },
+
+
             lengthDepenseByEntreprise:function(req,res){
 
                 acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
 
                     if(aclres){
 
-                        Operation.aggregate([
+                        Depense.aggregate([
                             {$match:{entreprise:new ObjectId(req.params.id)}},
                             {$group: {_id:null, point:{$sum:"$point"}}}
                         ],function(err,operation){
@@ -964,6 +1519,271 @@
                 })
 
             },
+
+            //LIST AVOIR ENTREPRISE
+
+            listAvoirByEntreprise:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        ListAvoir.find({entreprise:req.params.id},function(error, avoirs){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    message:error
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    message:avoirs
+                                })
+                            }
+                            
+                        }).populate('client');
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        }); 
+                    }
+                })
+
+            },
+
+            countListAvoir:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        let list = ListAvoir.find({entreprise: req.params.id});
+
+                        list.count(function(err, count){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    encaisse:err
+                                })
+    
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    list: count
+                                })
+                            }
+                        })
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });  
+                    }
+                })
+            },
+
+            countAvoirDepense:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        ListAvoir.aggregate([
+                            {$match:{entreprise:new ObjectId(req.params.id),type:"Depense"}},
+                            {$group: {_id:null, montant:{$sum:"$montant"}}}
+                        ],function(err,depense){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    depense:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    depense: depense
+                                })
+                            }
+
+                        })
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });  
+                    }
+                })
+            },
+
+            countAvoirEncaisse:function(req,res){
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        ListAvoir.aggregate([
+                            {$match:{entreprise:new ObjectId(req.params.id),type:"Encaisse"}},
+                            {$group: {_id:null, montant:{$sum:"$montant"}}}
+                        ],function(err,encaisse){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    encaisse:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    encaisse: encaisse
+                                })
+                            }
+
+                        })
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });  
+                    }
+                })
+            },
+
+            // Detail client visite, achat, cadeau et avoir
+            getClientByVisite:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        Operation.findOne({_id:req.params.id},function(error, operation){
+
+                            if(error){
+                                res.status(500).json({
+                                    success:false,
+                                    message:error
+                                })
+
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    message: operation
+                                })
+                            }
+                        }).populate('client').populate('user');
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+                })    
+
+            },
+
+            getClientByDepense:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        Depense.findOne({_id:req.params.id},function(error, depense){
+
+                            if(error){
+                                res.status(500).json({
+                                    success:false,
+                                    message:error
+                                })
+
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    message: depense
+                                })
+                            }
+                        }).populate('client').populate('user').populate('produit');
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+                })    
+
+            },
+
+            getClientByAvoirDepense:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        AvoirDepense.findOne({_id:req.params.id},function(error, depense){
+
+                            if(error){
+                                res.status(500).json({
+                                    success:false,
+                                    message:error
+                                })
+
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    message: depense
+                                })
+                            }
+                        }).populate('client').populate('user');
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+                })    
+
+            },
+
+            getClientByAvoirEncaisse:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        AvoirEncaisse.findOne({_id:req.params.id},function(error, encaisse){
+
+                            if(error){
+                                res.status(500).json({
+                                    success:false,
+                                    message:error
+                                })
+
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    message: encaisse
+                                })
+                            }
+                        }).populate('client').populate('user');
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+                })    
+
+            },
+
+           
+
 
         }
     }
