@@ -272,7 +272,28 @@ module.exports ={
                                 });
                             }
                         })
+                   }else{
 
+                        message.promotion = new ObjectId(promotion._id);
+                        message.client = new ObjectId(element._id);
+                        message.entreprise = new ObjectId(promotion.entreprise);
+                        message.dateCreated = new Date();
+                        message.lire = false;
+                        message.type = "promotion";
+
+                        message.save(function(err, message){
+                            if(err){
+                                console.log("Erreur", err);
+                            }else{
+                                if(global.socket!=undefined){
+                                    global.socket.broadcast.emit('message_visite', message);
+                                }
+                                resolve({
+                                    message: message,
+                                    status: 'success'
+                                });
+                            }
+                        })
                    }
  
                 });
@@ -358,6 +379,28 @@ module.exports ={
                         })
 
                    }if(promotion.sexe=="Homme" && (age>=promotion.age1 && age<=promotion.age2)){
+
+                        message.promotion = new ObjectId(promotion._id);
+                        message.client = new ObjectId(element._id);
+                        message.entreprise = new ObjectId(promotion.entreprise);
+                        message.dateCreated = new Date();
+                        message.lire = false;
+                        message.type = "promotion";
+
+                        message.save(function(err, message){
+                            if(err){
+                                console.log("Erreur", err);
+                            }else{
+                                if(global.socket!=undefined){
+                                    global.socket.broadcast.emit('message_visite', message);
+                                }
+                                resolve({
+                                    message: message,
+                                    status: 'success'
+                                });
+                            }
+                        })
+                   }else{
 
                         message.promotion = new ObjectId(promotion._id);
                         message.client = new ObjectId(element._id);
