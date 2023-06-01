@@ -2,6 +2,7 @@
 
     'use strict';
     var Promotion = require('../models/promotions.model').PromotionsModel;
+    var messageApp = require('../services/messageApp.service');
     var fs = require("fs");
 
     module.exports = function(acl, app){
@@ -111,8 +112,20 @@
                                                 console.error(err)
                                                 return
                                             }
-                                        })    
-            
+                                        });
+
+
+                                        if(promotion.types=="App" && promotion.critere=="Instantanné" && promotion.cible=="Mes clients" && promotion.etat=="envoyée"){
+                                            messageApp.createPromotionApp(promotion);
+                                        }else if(promotion.types=="App" && promotion.critere=="Instantanné" && promotion.cible=="Utilisateur Wefid" && promotion.etat=="envoyée"){
+                                             messageApp.createPromotionAppWifed(promotion);
+                                        }
+                                        else if(promotion.types=="Sms" && promotion.critere=="Instantanné" && promotion.cible=="Mes clients" && promotion.etat=="envoyée"){
+                                            messageApp.createPromotionSms(promotion);
+                                        } 
+                                        else if(promotion.types=="Sms" && promotion.critere=="Instantanné" && promotion.cible=="Utilisateur Wefid" && promotion.etat=="envoyée"){
+                                            messageApp.createPromotionSmsWifed(promotion);
+                                        } 
                                         res.json({
                                             success: true,
                                             message:promotion
@@ -134,7 +147,18 @@
                                         success: false,
                                         message: err
                                     });
-    
+                                    
+                                if(promotion.types=="App" && promotion.critere=="Instantanné" && promotion.cible=="Mes clients" && promotion.etat=="envoyée"){
+                                    messageApp.createPromotionApp(promotion);
+                                }else if(promotion.types=="App" && promotion.critere=="Instantanné" && promotion.cible=="Utilisateur Wefid" && promotion.etat=="envoyée"){
+                                    messageApp.createPromotionAppWifed(promotion);
+                                }
+                                else if(promotion.types=="Sms" && promotion.critere=="Instantanné" && promotion.cible=="Mes clients" && promotion.etat=="envoyée"){
+                                    messageApp.createPromotionSms(promotion);
+                                } 
+                                else if(promotion.types=="Sms" && promotion.critere=="Instantanné" && promotion.cible=="Utilisateur Wefid" && promotion.etat=="envoyée"){
+                                    messageApp.createPromotionSmsWifed(promotion);
+                                }     
                                 res.json({
                                     success: true,
                                     message:promotion
@@ -236,6 +260,20 @@
                                                     message:err
                                                 })
                                             }else{
+
+
+                                                if(promotion.types=="App" && promotion.critere=="Instantanné" && promotion.cible=="Mes clients" && promotion.etat=="envoyée"){
+                                                    messageApp.createPromotionApp(promotion);
+                                                }else if(promotion.types=="App" && promotion.critere=="Instantanné" && promotion.cible=="Utilisateur Wefid" && promotion.etat=="envoyée"){
+                                                    messageApp.createPromotionAppWifed(promotion);
+                                                }
+                                                else if(promotion.types=="Sms" && promotion.critere=="Instantanné" && promotion.cible=="Mes clients" && promotion.etat=="envoyée"){
+                                                    messageApp.createPromotionSms(promotion);
+                                                } 
+                                                else if(promotion.types=="Sms" && promotion.critere=="Instantanné" && promotion.cible=="Utilisateur Wefid" && promotion.etat=="envoyée"){
+                                                    messageApp.createPromotionSmsWifed(promotion);
+                                                }   
+
                                                 res.status(200).json({
                                                     success:true,
                                                     message: promotion
@@ -249,7 +287,8 @@
                                     next(error);
                                 }
 
-                            }else{
+                            }
+                            else{
 
                                 Promotion.findOneAndUpdate({_id:req.params.id}, promotion,{ new: true },function(err, promotion){
                                     if(err){
@@ -258,6 +297,19 @@
                                             message:err
                                         })
                                     }else{
+
+                                        if(promotion.types=="App" && promotion.critere=="Instantanné" && promotion.cible=="Mes clients" && promotion.etat=="envoyée"){
+                                            messageApp.createPromotionApp(promotion);
+                                        }else if(promotion.types=="App" && promotion.critere=="Instantanné" && promotion.cible=="Utilisateur Wefid" && promotion.etat=="envoyée"){
+                                            messageApp.createPromotionAppWifed(promotion);
+                                        }
+                                        else if(promotion.types=="Sms" && promotion.critere=="Instantanné" && promotion.cible=="Mes clients" && promotion.etat=="envoyée"){
+                                            messageApp.createPromotionSms(promotion);
+                                        } 
+                                        else if(promotion.types=="Sms" && promotion.critere=="Instantanné" && promotion.cible=="Utilisateur Wefid" && promotion.etat=="envoyée"){
+                                            messageApp.createPromotionSmsWifed(promotion);
+                                        }   
+
                                         res.status(200).json({
                                             success:true,
                                             message: promotion

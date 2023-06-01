@@ -13,8 +13,15 @@
     var AvoirDepense = require('../models/avoirDepense.model').AvoirDepenseModel;
     var AvoirEncaisse = require('../models/avoirEncaisse.model').AvoirEncaisseModel;
     var operationService = require('../services/operation.service');
+    var connexionService = require('../services/connexion.service');
     var ObjectId = require('mongoose').Types.ObjectId;
     var ListAvoir = require('../models/listAvoir.model').ListAvoirModel;
+    var MessageClient = require('../models/messageClient.model').MessageClientModel;
+    var messageAppService = require('../services/messageApp.service');
+    var TokenModel = require('../models/token.model').TokenModel;
+    const axios = require("axios");
+
+
 
 
     module.exports = function(acl,app){
@@ -99,6 +106,29 @@
                 })
             },
 
+            getOperationByUser:function(req,res) {
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+                 
+                    if(aclres){
+
+                        let operation = await Operation.findOne({user:new ObjectId(req.decoded.id),entreprise:new ObjectId(req.params.id)});
+                        res.json({
+                            success: true,
+                            message: operation
+                        });
+
+                    }else{
+
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+
+                })
+            },
+
             listOperationByClient:function(req,res){
 
                 acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
@@ -141,10 +171,13 @@
 
                     if(aclres){
 
-                        let operation = await Operation.findOne({user:req.params.id, entreprise:req.params.entreprise});
-                        let pointVisite = await PointVisite.findOne({entreprise:req.params.entreprise});
-                        let client = await Client.findOne({user:req.params.id});
+                        let operation = await Operation.findOne({user:new ObjectId(req.params.id), entreprise:new ObjectId(req.params.entreprise)});
+                        let pointVisite = await PointVisite.findOne({entreprise:new ObjectId(req.params.entreprise)});
+                        let client = await Client.findOne({user:new ObjectId(req.params.id)});
                         let type="Visites";
+                        let messageClient = await MessageClient.findOne({entreprise:new ObjectId(req.params.entreprise), etat:"Envoyer",type:"Visite",automatique:true});
+                       
+
 
                         if(operation){
 
@@ -153,14 +186,43 @@
                             operation.point = parseInt(operation.point) + parseInt(pointVisite.point),
                             operation.nombreVisite = parseInt(operation.nombreVisite) + 1;
 
-                            Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},function(error,operation){
+                            Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},async function(error,operation){
                                 if(err){
                                     res.status(500).json({
                                         success:false,
                                         message:error
-                                    })
+                                    });
                                 }else{
+                                    if(messageClient){
+
+                                       if(messageClient.typePromotion=="App"){
+                                        messageAppService.createMessageVisite(messageClient._id,client._id);
+                                        if(global.socket!=undefined){
+                                          global.socket.broadcast.emit('message_visite', messageClient);
+                                        }
+                                       }else{
+
+                                        let grant = `grant_type=client_credentials`;
+                                        const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                                        {
+                                          headers:{
+                                            Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                                           'Content-Type': 'application/x-www-form-urlencoded'
+                                         }
+                                        
+                                        });
+                                        if(response.data.access_token){
+                                            messageAppService.notificationSms(req.params.id,messageClient.message,response.data.access_token);
+                                        }
+
+                                      }
+                                    }
                                     operationService.addEncaisse(req.params.id,req.params.entreprise,pointVisite.point,type);
+                                    connexionService.scannerConnexion(req.decoded.id);
+                                    operationService.addHistorique(req.params.entreprise,client._id);
+                                    if(global.socket!=undefined){
+                                        global.socket.broadcast.emit('get_visite', operation.point);
+                                    }
                                     res.status(200).json({
                                         success:true,
                                         message: operation
@@ -168,7 +230,8 @@
                                 }
                             })
 
-                        }else{
+                        }
+                        else{
 
                             let op = new Operation();
                             op.entreprise = new ObjectId(req.params.entreprise);
@@ -183,14 +246,40 @@
                             op.point =pointVisite.point;
                             op.nombreVisite =1;
 
-                            op.save(function(err, operation){
+                            op.save(async function(err, operation){
                                 if(err){
                                     res.status(500).json({
                                         success:false,
                                         message:error
                                     })
                                 }else{
+                                    if(messageClient){
+                                        
+                                        if(messageClient.typePromotion=="App"){
+                                            //messageAppService.notificationPush(tokenUser.token, messageClient.nom, messageClient.message);
+                                            messageAppService.createMessageVisite(messageClient._id,client._id);
+                                            if(global.socket!=undefined){
+                                               global.socket.broadcast.emit('message_visite', messageClient);
+                                            }
+                                           
+                                        }else{
+                                            let grant = `grant_type=client_credentials`;
+                                            const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
+                                            {
+                                            headers:{
+                                                Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                                            'Content-Type': 'application/x-www-form-urlencoded'
+                                            }
+                                            
+                                            });
+                                            if(response.data.access_token){
+                                                messageAppService.notificationSms(req.params.id,messageClient.message,response.data.access_token);
+                                            }
+                                        }
+                                     }
+                                    operationService.addClientToEntreprise(client._id,req.params.entreprise);
                                     operationService.addEncaisse(req.params.id,req.params.entreprise,pointVisite.point,type);
+                                    operationService.addHistorique(req.params.entreprise,client._id);
                                     res.status(200).json({
                                         success:true,
                                         message: operation
@@ -200,9 +289,7 @@
                             //operationService.addOperationByEntrepise(req.params.entreprise,client._id,req.params.id);
 
                         }
-
-                            
-
+     
                     }else{
                         return res.status(401).json({
                             success: false,
@@ -234,9 +321,12 @@
 
                             if(req.body.montant>=budget.achat){
 
-                                operation.achat = parseInt(operation.achat) + parseInt(budget.point);
+                                let montant = parseInt(req.body.montant/budget.achat);
+                                let point = parseInt(montant)*parseInt(budget.point);
+
+                                operation.achat = parseInt(operation.achat) + parseInt(point);
                                 operation.fin = new Date();
-                                operation.point = parseInt(operation.point) + parseInt(budget.point);
+                                operation.point = parseInt(operation.point) + parseInt(point);
                                 operation.montantAchat = parseInt(operation.montantAchat) + parseInt(req.body.montant);
                                 operation.depense =  parseInt(operation.depense) + parseInt(req.body.montant);
     
@@ -248,7 +338,11 @@
                                         })
                                     }else{
     
-                                        operationService.addEncaisse(req.params.id,req.params.entreprise,budget.point,type);
+                                        operationService.addEncaisse(req.params.id,req.params.entreprise,point,type);
+                                        if(global.socket!=undefined){
+                                            global.socket.broadcast.emit('get_visite', operation.point);
+                                         }
+                                      
                                         res.status(200).json({
                                             success:true,
                                             message: operation
@@ -339,6 +433,7 @@
                                 })
                             }
 
+                            operationService.addClientToEntreprise(client._id,req.params.entreprise);
                         }
                     }else{
 
@@ -363,6 +458,8 @@
                         let operation = await Operation.findOne({user:req.params.id, entreprise:req.params.entreprise});
                         let cadeau = await Cadeau.findOne({_id:new ObjectId(req.params.cadeau)}).populate("typesPoint");
                         let entreprise = await Entreprises.findOne({_id:new ObjectId(req.params.entreprise)});
+                        let type;
+                        let message;
 
 
                         //console.log("Cadeau", cadeau.entreprise);
@@ -374,44 +471,120 @@
 
                             if(cadeau.typesPoint.nom=="Visites"){
 
-                                operation.visite = parseInt(operation.visite) - parseInt(cadeau.point);
-                                operation.point = parseInt(operation.point) - parseInt(cadeau.point);
+                                if(cadeau.point>operation.visite){
 
-                            }else{
-                                operation.achat = parseInt(operation.achat) - parseInt(cadeau.point);
-                                operation.point = parseInt(operation.point) - parseInt(cadeau.point);
-                            }
-
-                            Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},function(error,operation){
-                                if(err){
-                                    res.status(500).json({
-                                        success:false,
-                                        message:error
-                                    })
-                                }else{
-
-                                    if(cadeauList){
-                                         operationService.updateCadeauClient(cadeauList._id);
-                                    }else{
-                                        operationService.addCadeauClient(operation.client,cadeau._id,req.params.entreprise);
-                                        operationService.addUserCadeau(cadeau._id,req.params.id);
-                                    }
-                                    operationService.addDepense(req.params.id,req.params.entreprise,cadeau.produit,cadeau.point);
-
+                                    message = "Le point cadeau est supérieur  à votre point visite"
                                     res.status(200).json({
                                         success:true,
-                                        operation: operation,
-                                        message: "Votre code cadeau a été scanné avec succès",
+                                        message: message,
+                                    })
+
+                                }else{
+
+                                    operation.visite = parseInt(operation.visite) - parseInt(cadeau.point);
+                                    operation.point = parseInt(operation.point) - parseInt(cadeau.point);
+                                    type = "Visite";
+
+                                    Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},function(error,operation){
+                                        if(err){
+                                            res.status(500).json({
+                                                success:false,
+                                                message:error
+                                            })
+                                        }
+                                        
+                                        else{
+        
+                                            if(cadeauList){
+                                                 operationService.updateCadeauClient(cadeauList._id);
+                                                 operationService.updateCadeau(cadeau._id);
+                                            }else{
+                                                operationService.addCadeauClient(operation.client,cadeau._id,req.params.entreprise);
+                                                operationService.addUserCadeau(cadeau._id,req.params.id);
+                                                operationService.updateCadeau(cadeau._id);
+                                            }
+                                            operationService.addDepense(req.params.id,req.params.entreprise,cadeau.produit,cadeau.point,type);
+                                            message="Votre code cadeau a été scanné avec succès"
+
+                                            if(global.socket!=undefined){
+                                                global.socket.broadcast.emit('get_visite', operation.point);
+                                             }
+
+                                            connexionService.recompenseConnexion(req.decoded.id);
+        
+                                            res.status(200).json({
+                                                success:true,
+                                                operation: operation,
+                                                message: message,
+                                                point:cadeau.point,
+                                            })
+        
+                                        }
                                     })
 
                                 }
-                            })
+
+                            }else{
+                                if(cadeau.point>operation.achat){
+
+                                    message = "Le point achat est supérieur à votre point achat"
+                                    res.status(200).json({
+                                        success:true,
+                                        message: message,
+                                    })
+
+                                }else{
+
+                                    operation.achat = parseInt(operation.achat) - parseInt(cadeau.point);
+                                    operation.point = parseInt(operation.point) - parseInt(cadeau.point);
+                                    type="Achat";
+
+                                    Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},function(error,operation){
+                                        if(err){
+                                            res.status(500).json({
+                                                success:false,
+                                                message:error
+                                            })
+                                        }
+                                        
+                                        else{
+        
+                                            if(cadeauList){
+                                                 operationService.updateCadeauClient(cadeauList._id);
+                                                 operationService.updateCadeau(cadeau._id);
+                                            }else{
+                                                operationService.addCadeauClient(operation.client,cadeau._id,req.params.entreprise);
+                                                operationService.addUserCadeau(cadeau._id,req.params.id);
+                                                operationService.updateCadeau(cadeau._id);
+                                            }
+                                            operationService.addDepense(req.params.id,req.params.entreprise,cadeau.produit,cadeau.point,type);
+                                            message="Votre code cadeau a été scanné avec succès"
+
+                                            if(global.socket!=undefined){
+                                                global.socket.broadcast.emit('get_visite', operation.point);
+                                             }
+
+                                            connexionService.recompenseConnexion(req.decoded.id);
+                                            res.status(200).json({
+                                                success:true,
+                                                operation: operation,
+                                                message: message,
+                                                point:cadeau.point,
+                                            })
+        
+                                        }
+                                    })
+                                }
+                                
+                            }
 
                         }else{
+
+                            message="Votre code cadeau ne correspond pas a nos codes cadeau"
                             
                             res.status(200).json({
                                 success:true,
-                                message: "Votre code cadeau ne correspond pas a nos codes cadeau"
+                                message: message
                             })
 
                         }
@@ -959,6 +1132,8 @@
 
             },
 
+
+
             lengthDepense:function(req,res){
                 acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
 
@@ -983,24 +1158,6 @@
 
                         })
 
-                        /*let depense = Depense.find({entreprise: req.params.id,user:req.decoded.id});
-
-                        depense.count(function(err, count){
-
-                            if(err){
-                                res.status(500).json({
-                                    success:false,
-                                    depense:err
-                                })
-    
-                            }else{
-                                res.status(200).json({
-                                    success:true,
-                                    depense: count
-                                })
-                            }
-                        })*/
-
                     }else{
                         return res.status(401).json({
                             success: false,
@@ -1018,6 +1175,131 @@
                     if(aclres){
 
                         Encaisse.aggregate([
+                            {$match:{$and:[{entreprise:new ObjectId(req.params.id)},{user:new ObjectId(req.decoded.id)}]}},
+                            {$group: {_id:null, point:{$sum:"$point"}}}
+                        ],function(err,operation){
+
+                            if(err){ 
+                                res.status(500).json({
+                                    success:false,
+                                    encaisse:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    encaisse: operation
+                                })
+                            }
+
+                        })
+
+                        /*let encaisse = Encaisse.find({entreprise: req.params.id,user:req.decoded.id});
+
+                        encaisse.count(function(err, count){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    encaisse:err
+                                })
+    
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    encaisse: count
+                                })
+                            }
+                        })*/
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });  
+                    }
+                })
+                
+            },
+
+            // Nombre des depenses par entreprise et utilisateur
+
+            lengthDepenseVisite:function(req,res){
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        Depense.aggregate([
+                            {$match:{$and:[{entreprise:new ObjectId(req.params.id)},{user:new ObjectId(req.decoded.id)},{type:"Visite"}]}},
+                            {$group: {_id:null, point:{$sum:"$point"}}}
+                        ],function(err,operation){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    depense:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    depense: operation
+                                })
+                            }
+
+                        })
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });  
+                    }
+                })
+
+            },
+
+            lengthDepenseAchat:function(req,res){
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        Depense.aggregate([
+                            {$match:{$and:[{entreprise:new ObjectId(req.params.id)},{user:new ObjectId(req.decoded.id)},{type:"Achat"}]}},
+                            {$group: {_id:null, point:{$sum:"$point"}}}
+                        ],function(err,operation){
+
+                            if(err){
+                                res.status(500).json({
+                                    success:false,
+                                    depense:err
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:true,
+                                    depense: operation
+                                })
+                            }
+
+                        })
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });  
+                    }
+                })
+
+            },
+
+            // Fin Nombre des depenses par entreprise et utilisateur
+
+            lengthEncaisseOperation:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        Operation.aggregate([
                             {$match:{$and:[{entreprise:new ObjectId(req.params.id)},{user:new ObjectId(req.decoded.id)}]}},
                             {$group: {_id:null, point:{$sum:"$point"}}}
                         ],function(err,operation){
@@ -1500,6 +1782,7 @@
 
             },
 
+           
 
 
         }

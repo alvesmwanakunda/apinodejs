@@ -30,6 +30,10 @@
             type:Number,
             required:false
         },
+        type:{
+            type:String,
+            required:false
+        },
         creation:{
             type:Date,
             required:false

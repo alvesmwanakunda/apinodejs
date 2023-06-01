@@ -26,6 +26,16 @@
             type: Date,
             required:false
         },
+        scanne:{
+            type:Number,
+            required:false,
+            default:0
+        },
+        recompense:{
+            type:Number,
+            required:false,
+            default:0
+        }
     });
     module.exports={
         ConnexionSchema : connexionSchema,

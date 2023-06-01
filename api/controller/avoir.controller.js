@@ -18,6 +18,8 @@
                         try {
 
                              avoir.avoir = req.body.avoir;
+                             avoir.visite = req.body.visite;
+                             avoir.depense = req.body.depense;
                              Avoir.findOneAndUpdate({_id:req.params.id},avoir,{new:true},function(err, avoir){
 
                                 if(err){

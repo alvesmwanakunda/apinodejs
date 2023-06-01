@@ -258,13 +258,25 @@
 
       app.route('/user')
          .get(Ctrl.getUser)
-         .put(Ctrl.updateProfil); 
-
+         .put(Ctrl.updateProfil);
+         
+      app.route('/user/client')
+         .get(Ctrl.getUserClient);
+   
       // agent 
       
       app.route('/agent/:id([a-fA-F\\d]{24})')
          .get(Ctrl.getAgent)
          .put(Ctrl.updateProfilAgent);
+
+      app.route('/notification')
+         .post(Ctrl.testNotification);
+         
+      app.route('/test/message')
+         .get(Ctrl.messageTest)  
+         
+      app.route('/delete/compte')
+         .get(Ctrl.deleteCompte)   
   }
   
 })();

@@ -68,15 +68,24 @@
 
     app.route('/entreprises')
         .get(Ctrl.getEntrepriseByCategorie);
+
+    app.route('/entreprises/comparaison')
+        .get(Ctrl.comparaisonListEntreprise);    
         
     app.route('/entreprises/visiter')
-        .get(Ctrl.getEntrepriseByUserVisiter);    
+        .get(Ctrl.getEntrepriseByUserVisiter);
+        
+    app.route('/visiter/entreprise/id/:id([a-fA-F\\d]{24})')
+        .get(Ctrl.getEntrepriseByIdVisiteur);    
 
          
      app.put("/entreprise/image/:id([a-fA-F\\d]{24})", upload.single("uploadfile"),Ctrl.uploadLogo);
 
      app.route('/entreprise/id/:id([a-fA-F\\d]{24})')
         .get(Ctrl.getEntrepriseById);
+
+    app.route('/shared/entreprise/:id([a-fA-F\\d]{24})')
+        .get(Ctrl.sharedGetEntrepriseById);   
 
 
     }

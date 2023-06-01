@@ -1,5 +1,8 @@
 var nodemailer = require('nodemailer');
 //var sgMail = require('@sendgrid/mail');
+var Entrepise = require('../models/entreprises.model').EntrepriseModel;
+var ObjectId = require('mongoose').Types.ObjectId;
+
 module.exports = {
 
 
@@ -11,13 +14,14 @@ module.exports = {
                 let transporter = nodemailer.createTransport({
                     host: process.env.SMTP_SERVER,
                     port: process.env.SMTP_PORT,
-                    secure: false,
+                    secure:false,
+                    tls:true,
                     auth:{
                         user:process.env.SMTP_USERNAME,
                         pass:process.env.SMTP_PASSWORD
                     },
-                    logger:false,
-                    debug:false
+                    logger: true,
+                    debug: true
                 },{
                     from: 'Wefid <' + process.env.SMTP_FROM + '>',
                     headers:{
@@ -28,7 +32,7 @@ module.exports = {
                 let message = {
                     to: user.email,
                     subject: 'Inscription au compte Wefid',
-                    html: 'Bonjour, <b>Cher utilisateur</b> <br/> Nous avons bien pris en compte votre inscription sur, <b>Wefid</b>.<br/> Votre identifiant de connexion est le suivant: <span style="color:#008CBA; text-decoration:underline">' + user.email +'</span> <br/> Veuillez cliquer sur ce lien pour valider votre compte <a href="' + process.env.validecompte + user.code + '&email=' + user.email + '">' + process.env.validecompte + user.code + '&email=' + user.email + '</a>'
+                    html: '<b>Bienvenu sur Wefid</b></br> Bonjour '+user.email+',<br/> Merci d\'avoir rejoint Wefid. Nous vous confirmons que votre compte a été créé succès. Afin de vérifier votre adresse mail veuillez cliquer sur le lien, <a href="' + process.env.validecompte + user.code + '&email=' + user.email + '">' + process.env.validecompte + user.code + '&email=' + user.email + '</a> </br> Si vous rencontrez des difficultés pour vous connecter à votre compte, contactez-nous à wefid@gmail.com. </br> <p style="text-align:center">L’équipe WeFid</p>'
                 };
                 transporter.sendMail(message, (error, user)=>{
                     if(error){
@@ -54,20 +58,25 @@ module.exports = {
         });
     },
     reset:(user)=>{
-        return new Promise((resolve, reject)=>{
+        return new Promise(async(resolve, reject)=>{
+
+
+            let entreprise = await Entrepise.findOne({createur:new ObjectId(user._id)})
+
 
             try {
 
                 let transporter = nodemailer.createTransport({
                     host: process.env.SMTP_SERVER,
                     port: process.env.SMTP_PORT,
-                    secure: false,
+                    secure:false,
+                    tls:true,
                     auth:{
                         user:process.env.SMTP_USERNAME,
                         pass:process.env.SMTP_PASSWORD
                     },
-                    logger:false,
-                    debug:false
+                    logger: true,
+                    debug: true
                 },{
                     from: 'Wefid <' + process.env.SMTP_FROM + '>',
                     headers:{
@@ -78,7 +87,7 @@ module.exports = {
                 let message = {
                     to: user.email,
                     subject: 'Réinitialisation de mot de passe Wefid',
-                    html: 'Bonjour, <b>' + user.email + '</b> <br />Une demande a été faite pour réinitialiser le mot de passe de votre compte associé à cette adresse email sur wefid.fr <br /> Vous devez vous rendre sur le site et changer votre mot de passe en cliquant sur le lien suivant: <br /><br /><a href="' + process.env.lostpassword + user.code + '&email=' + user.email + '">' + process.env.lostpassword + user.code + '&email=' + user.email + '</a> <br /><br /> Il s\'agit d\'une connexion temporaire, elle ne peut être utilisée qu\'une fois. Elle expire après 24 heures et rien ne se passe si elle n\'est pas utilisée <br /> Si vous n\'êtes pas à l\'origine de cette demande, ignorez cet email et votre mot de passe ne sera pas réinitialisé. <br /> <img src="" />',
+                    html: 'Bonjour <b>' + entreprise.nom + ',</b> <br />Nous avons bien reçu une demande de récupération de votre mot de passe WeFid. Pour définir un nouveau mot de passe, veuillez cliquer sur le lien suivant: <a href="' + process.env.lostpassword + user.code + '&email=' + user.email + '">' + process.env.lostpassword + user.code + '&email=' + user.email + '</a> <br /><br /> Si vous n\'êtes pas à l\'origine de cette demande de récupération de votre mot de passe, veuillez ignorer ce message.</br> <p style="text-align:center">L\'équipe WeFid</p>',
                 };
                 transporter.sendMail(message, (error, user)=>{
                     if(error){

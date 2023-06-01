@@ -13,6 +13,9 @@
         app.route('/operation/:id([a-fA-F\\d]{24})')
         .get(Ctrl.getOperationByClient)
 
+        app.route('/user/operation/:id([a-fA-F\\d]{24})')
+        .get(Ctrl.getOperationByUser)
+
         app.route('/operations/user')
         .get(Ctrl.listOperationByClient)
 
@@ -48,10 +51,18 @@
           
         app.route('/depense/length/:id([a-fA-F\\d]{24})') 
           .get(Ctrl.lengthDepense); 
+
+        app.route('/depense/visite/:id([a-fA-F\\d]{24})') 
+          .get(Ctrl.lengthDepenseVisite);
+          
+        app.route('/depense/achat/:id([a-fA-F\\d]{24})') 
+          .get(Ctrl.lengthDepenseAchat);  
           
         app.route('/encaisse/length/:id([a-fA-F\\d]{24})') 
           .get(Ctrl.lengthEncaisse);
           
+        app.route('/operation/encaisse/length/:id([a-fA-F\\d]{24})') 
+          .get(Ctrl.lengthEncaisseOperation);  
         //Route avoir
         
         app.route('/operation/avoir/:id([a-fA-F\\d]{24})/:entreprise([a-fA-F\\d]{24})')
@@ -116,6 +127,8 @@
             .get(Ctrl.getClientByAvoirDepense) 
             
           app.route('/get/client/avoir/encaisse/:id([a-fA-F\\d]{24})')
-            .get(Ctrl.getClientByAvoirEncaisse)  
+            .get(Ctrl.getClientByAvoirEncaisse) 
+            
+           
     }
 })();

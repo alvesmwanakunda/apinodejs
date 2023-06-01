@@ -11,6 +11,16 @@
             required:false,
             default:false
         },
+        visite:{
+            type:Boolean,
+            required:false,
+            default:false
+        },
+        depense:{
+            type:Boolean,
+            required:false,
+            default:false
+        },
         entreprise:{
             type: Schema.ObjectId,
             ref: "Entreprises",
