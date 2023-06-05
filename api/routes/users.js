@@ -259,7 +259,7 @@
       app.route('/user')
          .get(Ctrl.getUser)
          .put(Ctrl.updateProfil);
-         
+
       app.route('/user/client')
          .get(Ctrl.getUserClient);
    
@@ -269,6 +269,9 @@
          .get(Ctrl.getAgent)
          .put(Ctrl.updateProfilAgent);
 
+      app.route('/password/agent/:id([a-fA-F\\d]{24})')
+         .get(Ctrl.decryptMD5)
+
       app.route('/notification')
          .post(Ctrl.testNotification);
          
@@ -276,7 +279,12 @@
          .get(Ctrl.messageTest)  
          
       app.route('/delete/compte')
-         .get(Ctrl.deleteCompte)   
+         .get(Ctrl.deleteCompte)  
+
+      app.route('/agent/update/password/:id([a-fA-F\\d]{24})')
+         .put(Ctrl.changePasswordControleur);
+         
+      
   }
   
 })();

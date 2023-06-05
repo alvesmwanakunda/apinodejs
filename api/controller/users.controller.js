@@ -25,6 +25,7 @@
      var fcm = new FCM(serverKey);
      const axios = require("axios");
      const queryString = require('node:querystring');
+     var Entreprise = require('../models/entreprises.model').EntrepriseModel;
 
     
      module.exports = function(acl){
@@ -577,9 +578,23 @@
                 })
             },
 
-            createAgent:function(req, res){
+            createAgent:async function(req, res){
 
                 var query = {};
+                let entreprise = await Entreprise.findOne({_id:req.params.id});
+                let nameEnt = entreprise.nom.substring(0, 2);
+                console.log("Nom", nameEnt);
+
+                var idcontroleur = Codes.generate({
+                    length:9,
+                    count:1,
+                    charset: Codes.charset("numbers")
+                  });
+                  idcontroleur=idcontroleur[0];
+
+                  console.log("IdControleur", nameEnt.concat(idcontroleur));
+
+
                 if(!req.body.emailorphone)
                    return res.json({
                        success:false,
@@ -593,9 +608,9 @@
                     req.body.email = req.body.emailorphone;
                 }else{
                     query ={
-                        phone:req.body.emailorphone
+                        phone:nameEnt.concat(idcontroleur)
                     };
-                    req.body.phone = req.body.emailorphone;
+                    req.body.phone = nameEnt.concat(idcontroleur);
                 }
 
                 req.body.role = 'agent';
@@ -628,13 +643,12 @@
                         user.password = crypto.createHash('md5').update(password).digest("hex");
 
                         user.save(function(err, user){
-                            if(err)
-                            return res.status(500).json({
-                                success: false,
-                                message: err
-                            });
-                            if(user.phone){
-
+                                if(err)
+                                return res.status(500).json({
+                                    success: false,
+                                    message: err
+                                });
+        
                                 var code = Codes.generate({
                                     length: 4,
                                     count: 1,
@@ -642,7 +656,6 @@
                                 });
                                 code = code[0];
                                 user.code = code;
-                                console.log("Code", code);
                                 user.save(async function(err, user){
                                     if(err){
 
@@ -663,7 +676,7 @@
                                     
                                     });
                                     if(response.data.access_token){
-                                      clientService.inscriptionSms(user, password,response.data.access_token);
+                                      clientService.inscriptionSmsAgent(req.body.emailorphone,user, password,response.data.access_token);
                                     }
                                     entrepriseService.addUserToEntreprise(req.params.id,user._id);
                                     res.json({
@@ -671,29 +684,6 @@
                                         message:user
                                     });   
                                 }) 
-
-                            }else{
-                                var code = Codes.generate({
-                                length:128,
-                                count:1,
-                                charset: Codes.charset("alphanumeric")
-                                });
-                                code = code[0];
-                                user.code = code;
-                                user.save(function(err, user){
-                                    if(err)
-                                    return res.status(500).json({
-                                        success: false,
-                                        message: err
-                                    });
-                                    entrepriseService.addUserToEntreprise(req.params.id,user._id);
-                                    clientService.inscriptionClient(user,password);
-                                    res.json({
-                                        success: true,
-                                        message:user
-                                    });   
-                                }) 
-                            }   
                         });
                     })
 
@@ -837,6 +827,7 @@
 
                 acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
                     if(aclres){
+
 
                         User.findOne({_id:req.params.id}, function(err, user){
 
@@ -999,7 +990,93 @@
                     }
                 })    
 
-            }
+            },
+
+            //decrypt password
+
+            decryptMD5: function(req,res) {
+
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+                    if(aclres){
+
+                        try {
+
+                            let user = await User.findOne({_id:req.params.id}).select('+password');
+
+                            if (!user) {
+                                return res.status(404).json({ error: 'Utilisateur non trouvé' });
+                            }
+                            console.log("user", user);
+                            const hashedPassword = user.password;
+                            const password = 'My Message';
+
+                            const decipher = crypto.createDecipher('aes192', password);
+                            let decrypted = decipher.update(hashedPassword, 'hex', 'utf8');
+                            decrypted += decipher.final('utf8');
+                            res.json({decryptePassword:decrypted})
+                            
+                        } catch (error) {
+                            console.error('Erreur lors de la récupération du mot de passe :', error);
+                            res.status(500).json({ error: 'Une erreur est survenue lors de la récupération du mot de passe' });
+                        }  
+
+                    }else{
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+                    }
+                })
+
+               
+            },
+
+            changePasswordControleur:function(req,res, next){
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+                    if(aclres){
+
+                     
+                       let user= await User.findOne({_id:req.params.id});
+                       //console.log("password", req.body.password);
+
+                       if(user){
+
+                        try {
+                            user.password = crypto.createHash('md5').update(req.body.password).digest("hex");
+                            User.findOneAndUpdate({_id:req.params.id},user,{new:true},function(err, user){
+                                if(err){
+                                 return res.status(500).json({
+                                     success:false,
+                                     message: err
+                                 });
+                                }
+                                else{
+                                 res.json({
+                                     success:true,
+                                     message:user
+                                 });
+                                }
+                             }); 
+                           } catch (error) {
+                               next(error)
+                           }
+
+                       }else{
+                            return res.json({
+                                success: false,
+                                message: "User not found"
+                            }) 
+                       }
+
+                    }else{
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+                    }
+                })
+            },
+              
 
             
         };

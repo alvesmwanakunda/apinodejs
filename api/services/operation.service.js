@@ -32,7 +32,7 @@ module.exports ={
                 operation.user= new ObjectId(user);
                 operation.creation = new Date(); 
                 operation.debut = new Date(); 
-                operation.fin = new Date();
+                //operation.fin = new Date();
                 
                 encaisse.creation = new Date();
                 encaisse.user = new ObjectId(user);

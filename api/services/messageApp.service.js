@@ -153,6 +153,13 @@ module.exports ={
             try {
 
               let user = await User.findOne({_id:new ObjectId(userId)});
+              let sms="";
+              if(message.isCode){
+                 sms= message.message+"\n\n"+"Ce message contient un code de promotion : " +message.code;
+              }
+              else{
+                 sms=message.message;
+              } 
     
               const response = await axios.post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B221771852694/requests",
               {
@@ -161,7 +168,7 @@ module.exports ={
                   "senderAddress":"tel:+221771852694",
                   "senderName": "Wefid",
                   "outboundSMSTextMessage":{
-                      "message":`${message}`
+                      "message":`${sms}`
                   }
                 }
               },
@@ -188,22 +195,19 @@ module.exports ={
             let currentYear = d.getFullYear();
             var age;
 
-            try {
+            let promotion = await Promotion.findOne({_id:promo._id});
+            let clients = await Client.find({entreprise:new ObjectId(promo.entreprise)}).populate('user');
 
-                let promotion = await Promotion.findOne({_id:promo._id});
-                let message = new MessageApp();
-                let clients = await Client.find({entreprise:new ObjectId(promo.entreprise)}).populate('user');
-            
-                clients.forEach(async(element) => {
+            let savePromises = clients.map(async (element) => {
 
-                   if(element.dateNaissance){
-                       age = currentYear - element.dateNaissance.getFullYear();
-                   }else{
-                       age = 0;
-                   } 
-                   console.log("age", age);
-
-                   if(promotion.sexe=="Touts" && (age>=promotion.age1 && age<=promotion.age2) ){
+                    if(element.dateNaissance){
+                        age = currentYear - element.dateNaissance.getFullYear();
+                    }else{
+                        age = 0;
+                    } 
+                    console.log("age", age);   
+                    let message = new MessageApp();
+                    if(promotion.sexe=="Touts" && (age>=promotion.age1 && age<=promotion.age2) ){
 
                         message.promotion = new ObjectId(promotion._id);
                         message.client = new ObjectId(element._id);
@@ -211,99 +215,123 @@ module.exports ={
                         message.dateCreated = new Date();
                         message.lire = false;
                         message.type = "promotion";
-
-                        message.save(function(err, message){
-                            if(err){
-                                console.log("Erreur", err);
-                            }else{
-                                if(global.socket!=undefined){
-                                    global.socket.broadcast.emit('message_visite', message);
-                                }
-                                resolve({
-                                    message: message,
-                                    status: 'success'
-                                });
+    
+                        try {
+                            let savedMessage = await message.save();
+                            if (global.socket !== undefined) {
+                            global.socket.broadcast.emit('message_visite', savedMessage);
                             }
-                        })
-
-                   }if(promotion.sexe=="Femme" && (age>=promotion.age1 && age<=promotion.age2)){
-
-
+                            return {
+                            message: savedMessage,
+                            status: 'success'
+                            };
+                        } catch (err) {
+                            console.log("Erreur", err);
+                            return {
+                            status: 'error',
+                            error: err
+                            };
+                        }
+    
+                    }if(promotion.sexe=="Femme" && (age>=promotion.age1 && age<=promotion.age2)){
+    
                         message.promotion = new ObjectId(promotion._id);
                         message.client = new ObjectId(element._id);
                         message.entreprise = new ObjectId(promotion.entreprise);
                         message.dateCreated = new Date();
                         message.lire = false;
                         message.type = "promotion";
-
-                        message.save(function(err, message){
-                            if(err){
-                                console.log("Erreur", err);
-                            }else{
-                                if(global.socket!=undefined){
-                                    global.socket.broadcast.emit('message_visite', message);
-                                }
-                                resolve({
-                                    message: message,
-                                    status: 'success'
-                                });
+    
+                        try {
+                            let savedMessage = await message.save();
+                            if (global.socket !== undefined) {
+                            global.socket.broadcast.emit('message_visite', savedMessage);
                             }
-                        })
-
-                   }if(promotion.sexe=="Homme" && (age>=promotion.age1 && age<=promotion.age2)){
-
+                            return {
+                            message: savedMessage,
+                            status: 'success'
+                            };
+                        } catch (err) {
+                            console.log("Erreur", err);
+                            return {
+                            status: 'error',
+                            error: err
+                            };
+                        }
+    
+                    }if(promotion.sexe=="Homme" && (age>=promotion.age1 && age<=promotion.age2)){
+    
                         message.promotion = new ObjectId(promotion._id);
                         message.client = new ObjectId(element._id);
                         message.entreprise = new ObjectId(promotion.entreprise);
                         message.dateCreated = new Date();
                         message.lire = false;
                         message.type = "promotion";
-
-                        message.save(function(err, message){
-                            if(err){
-                                console.log("Erreur", err);
-                            }else{
-                                if(global.socket!=undefined){
-                                    global.socket.broadcast.emit('message_visite', message);
-                                }
-                                resolve({
-                                    message: message,
-                                    status: 'success'
-                                });
+    
+                        try {
+                            let savedMessage = await message.save();
+                            if (global.socket !== undefined) {
+                            global.socket.broadcast.emit('message_visite', savedMessage);
                             }
-                        })
-                   }else{
-
+                            return {
+                            message: savedMessage,
+                            status: 'success'
+                            };
+                        } catch (err) {
+                            console.log("Erreur", err);
+                            return {
+                            status: 'error',
+                            error: err
+                            };
+                        }  
+                    }else{
+    
                         message.promotion = new ObjectId(promotion._id);
                         message.client = new ObjectId(element._id);
                         message.entreprise = new ObjectId(promotion.entreprise);
                         message.dateCreated = new Date();
                         message.lire = false;
                         message.type = "promotion";
-
-                        message.save(function(err, message){
-                            if(err){
-                                console.log("Erreur", err);
-                            }else{
-                                if(global.socket!=undefined){
-                                    global.socket.broadcast.emit('message_visite', message);
-                                }
-                                resolve({
-                                    message: message,
-                                    status: 'success'
-                                });
+    
+                        try {
+                            let savedMessage = await message.save();
+                            if (global.socket !== undefined) {
+                            global.socket.broadcast.emit('message_visite', savedMessage);
                             }
-                        })
-                   }
- 
-                });
+                            return {
+                            message: savedMessage,
+                            status: 'success'
+                            };
+                        } catch (err) {
+                            console.log("Erreur", err);
+                            return {
+                            status: 'error',
+                            error: err
+                            };
+                        }  
+                    }
+            });
 
-            } catch (error) {
-                reject(error);
-            }
+            Promise.all(savePromises)
+            .then((results) => {
+                // Traitez les résultats ici
+               // console.log(results);
+                return {
+                    message: results,
+                    status: 'success'
+                 };
 
-           
-            
+                // ...
+            })
+            .catch((err) => {
+                // Traitez l'erreur ici
+                //console.log(err);
+                return {
+                    message: err,
+                    status: 'false'
+                 };
+                // ...
+            });
 
         });
     },
@@ -316,22 +344,19 @@ module.exports ={
             let currentYear = d.getFullYear();
             var age;
 
-            try {
+            let promotion = await Promotion.findOne({_id:promo._id});
+            let clients = await Client.find().populate('user');
 
-                let promotion = await Promotion.findOne({_id:promo._id});
-                let message = new MessageApp();
-                let clients = await Client.find().populate('user');
-            
-                clients.forEach(async(element) => {
+            let savePromises = clients.map(async (element) => {
 
-                   if(element.dateNaissance){
-                       age = currentYear - element.dateNaissance.getFullYear();
-                   }else{
-                       age = 0;
-                   } 
-                   console.log("age", age);
-
-                   if(promotion.sexe=="Touts" && (age>=promotion.age1 && age<=promotion.age2) ){
+                    if(element.dateNaissance){
+                        age = currentYear - element.dateNaissance.getFullYear();
+                    }else{
+                        age = 0;
+                    } 
+                    console.log("age", age);   
+                    let message = new MessageApp();
+                    if(promotion.sexe=="Touts" && (age>=promotion.age1 && age<=promotion.age2) ){
 
                         message.promotion = new ObjectId(promotion._id);
                         message.client = new ObjectId(element._id);
@@ -339,97 +364,123 @@ module.exports ={
                         message.dateCreated = new Date();
                         message.lire = false;
                         message.type = "promotion";
-
-                        message.save(function(err, message){
-                            if(err){
-                                console.log("Erreur", err);
-                            }else{
-                                if(global.socket!=undefined){
-                                    global.socket.broadcast.emit('message_visite', message);
-                                }
-                                resolve({
-                                    message: message,
-                                    status: 'success'
-                                });
+    
+                        try {
+                            let savedMessage = await message.save();
+                            if (global.socket !== undefined) {
+                            global.socket.broadcast.emit('message_visite', savedMessage);
                             }
-                        })
-
-                   }if(promotion.sexe=="Femme" && (age>=promotion.age1 && age<=promotion.age2)){
-
-
+                            return {
+                            message: savedMessage,
+                            status: 'success'
+                            };
+                        } catch (err) {
+                            console.log("Erreur", err);
+                            return {
+                            status: 'error',
+                            error: err
+                            };
+                        }
+    
+                    }if(promotion.sexe=="Femme" && (age>=promotion.age1 && age<=promotion.age2)){
+    
                         message.promotion = new ObjectId(promotion._id);
                         message.client = new ObjectId(element._id);
                         message.entreprise = new ObjectId(promotion.entreprise);
                         message.dateCreated = new Date();
                         message.lire = false;
                         message.type = "promotion";
-
-                        message.save(function(err, message){
-                            if(err){
-                                console.log("Erreur", err);
-                            }else{
-                                if(global.socket!=undefined){
-                                    global.socket.broadcast.emit('message_visite', message);
-                                }
-                                resolve({
-                                    message: message,
-                                    status: 'success'
-                                });
+    
+                        try {
+                            let savedMessage = await message.save();
+                            if (global.socket !== undefined) {
+                            global.socket.broadcast.emit('message_visite', savedMessage);
                             }
-                        })
-
-                   }if(promotion.sexe=="Homme" && (age>=promotion.age1 && age<=promotion.age2)){
-
+                            return {
+                            message: savedMessage,
+                            status: 'success'
+                            };
+                        } catch (err) {
+                            console.log("Erreur", err);
+                            return {
+                            status: 'error',
+                            error: err
+                            };
+                        }
+    
+                    }if(promotion.sexe=="Homme" && (age>=promotion.age1 && age<=promotion.age2)){
+    
                         message.promotion = new ObjectId(promotion._id);
                         message.client = new ObjectId(element._id);
                         message.entreprise = new ObjectId(promotion.entreprise);
                         message.dateCreated = new Date();
                         message.lire = false;
                         message.type = "promotion";
-
-                        message.save(function(err, message){
-                            if(err){
-                                console.log("Erreur", err);
-                            }else{
-                                if(global.socket!=undefined){
-                                    global.socket.broadcast.emit('message_visite', message);
-                                }
-                                resolve({
-                                    message: message,
-                                    status: 'success'
-                                });
+    
+                        try {
+                            let savedMessage = await message.save();
+                            if (global.socket !== undefined) {
+                            global.socket.broadcast.emit('message_visite', savedMessage);
                             }
-                        })
-                   }else{
-
+                            return {
+                            message: savedMessage,
+                            status: 'success'
+                            };
+                        } catch (err) {
+                            console.log("Erreur", err);
+                            return {
+                            status: 'error',
+                            error: err
+                            };
+                        }  
+                    }else{
+    
                         message.promotion = new ObjectId(promotion._id);
                         message.client = new ObjectId(element._id);
                         message.entreprise = new ObjectId(promotion.entreprise);
                         message.dateCreated = new Date();
                         message.lire = false;
                         message.type = "promotion";
-
-                        message.save(function(err, message){
-                            if(err){
-                                console.log("Erreur", err);
-                            }else{
-                                if(global.socket!=undefined){
-                                    global.socket.broadcast.emit('message_visite', message);
-                                }
-                                resolve({
-                                    message: message,
-                                    status: 'success'
-                                });
+    
+                        try {
+                            let savedMessage = await message.save();
+                            if (global.socket !== undefined) {
+                            global.socket.broadcast.emit('message_visite', savedMessage);
                             }
-                        })
+                            return {
+                            message: savedMessage,
+                            status: 'success'
+                            };
+                        } catch (err) {
+                            console.log("Erreur", err);
+                            return {
+                            status: 'error',
+                            error: err
+                            };
+                        }  
+                    }
+            });
 
-                   }
- 
-                });
+            Promise.all(savePromises)
+            .then((results) => {
+                // Traitez les résultats ici
+               // console.log(results);
+                return {
+                    message: results,
+                    status: 'success'
+                 };
 
-            } catch (error) {
-                reject(error);
-            }
+                // ...
+            })
+            .catch((err) => {
+                // Traitez l'erreur ici
+                //console.log(err);
+                return {
+                    message: err,
+                    status: 'false'
+                 };
+                // ...
+            });
 
         });
     },

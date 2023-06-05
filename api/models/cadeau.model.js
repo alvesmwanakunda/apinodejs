@@ -3,6 +3,7 @@
     "use strict";
     var mongoose = require("mongoose");
     var Schema = mongoose.Schema;
+    var CadeauClient = require('./cadeauClient.model').CadeauClientModel;
 
     var cadeauSchema = new Schema({
 
@@ -79,6 +80,11 @@
            default:false,
            required:false
         }
+    });
+    cadeauSchema.pre('remove', async function (next) {
+        // Supprimer les enfants associés
+        await CadeauClient.deleteMany({ cadeau: this._id });
+        next();
     });
     module.exports={
         CadeauSchema : cadeauSchema,

@@ -7,6 +7,8 @@ var moment = require('moment');
 var Operation = require('../models/operation.model').OperationModel;
 const axios = require("axios");
 var MessageAppService = require('../services/messageApp.service');
+var crypto  = require('crypto');
+
 
 //Function anniversaire
 
@@ -15,6 +17,7 @@ let AnniversaireClientApp = async function(){
     var now = new Date();
     var day = now.getDate();
     var month = now.getMonth()+1;
+    console.log("Mois", month);
     let messageApp = await MessageClient.find({etat:"Envoyer",automatique:true,type:"Anniversaire",typePromotion:"App"});
     let client = await Client.find({"day":day,"month":month});
 
@@ -67,7 +70,7 @@ let RelancerApp= async function(){
             const dateToday =  moment(debut, "YYYY-MM-DD");
             let numberDate = moment.duration(dateToday.diff(dateFin)).asDays();
 
-            //console.log("Fin",numberDate);
+            console.log("Fin",numberDate);
 
             if(numberDate >= element.visite){
 
@@ -231,7 +234,6 @@ let PromotionSmsWefid = async function(){
     });
 
 }
-
 module.exports={
     AnniversaireClientApp: AnniversaireClientApp,
     RelancerApp: RelancerApp,

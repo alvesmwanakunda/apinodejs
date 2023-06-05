@@ -208,6 +208,7 @@
                         req.body.nom = req.body.nom;
                         req.body.prenom = req.body.prenom;
                         req.body.role = 'user';
+                        req.body.valid = true;
                        
                         var user = new User(req.body);
 
@@ -359,6 +360,7 @@
                         req.body.nom = req.body.nom;
                         req.body.prenom = req.body.prenom;
                         req.body.role = 'user';
+                        req.body.valid = true;
                        
                         var user = new User(req.body);
 
@@ -527,7 +529,7 @@
                       if(req.file == undefined){
                           return res.status(400).send("Please upload an excel file!");
                       } 
-                      //console.log("File", req.file); 
+                      console.log("File", req.file); 
                       var client = {};
                       var query = {};
                       let path = "./public/" + req.file.filename;
@@ -542,7 +544,7 @@
                               columnToKey:{
                                   A:'nom',
                                   B:'prenom',
-                                  C:'emailorphone',
+                                  C:'phone',
                                   D:'genre',
                                   E:'adresse'
                               }
@@ -558,13 +560,13 @@
 
                                 let clientInfo = clients[i];
                                 //console.log("Info", clientInfo);
-                                if(!clientInfo.emailorphone)
+                                if(!clientInfo.phone)
                                     return res.json({
                                         success:false,
                                         message: ""
                                     });
                             
-                                    User.findOne({email:clientInfo.emailorphone}, function(err, userexists){
+                                    User.findOne({phone:clientInfo.phone}, function(err, userexists){
 
                                         //console.log("UserExists", userexists);
                                         if(err)
@@ -572,28 +574,18 @@
                                                 success: false,
                                                 message: err
                                             });
-                                        if(clientInfo.emailorphone.length==9){
+                                        //console.log("Number length",JSON.stringify(clientInfo.phone).length);
+
+                                        if(JSON.stringify(clientInfo.phone).length==9){
 
                                             if(!userexists){
 
-                                                if(Isemail.validate(clientInfo.emailorphone.toString())){
-                                                    console.log("Ici");
-                                                    query = {
-                                                        email:clientInfo.emailorphone
-                                                    };
-                                                }else{
-                                                    query ={
-                                                        phone:clientInfo.emailorphone
-                                                    };
-                                                }
-    
-                                                if(query.phone){
-                                                  req.body.phone = clientInfo.emailorphone;
-                                                  req.body.email=undefined;
-                                                }else if (query.email){
-                                                 req.body.email = clientInfo.emailorphone;
-                                                 req.body.phone = undefined;
-                                                }
+                                                query ={
+                                                    phone:clientInfo.emailorphone
+                                                };
+                                                
+                                                req.body.phone = clientInfo.phone;
+                                                req.body.email=undefined;
                                                 req.body.nom = clientInfo.nom;
                                                 req.body.prenom = clientInfo.prenom;
                                                 req.body.role = 'user';
@@ -626,8 +618,8 @@
                                                                     success: false,
                                                                     message: err
                                                                 });
-                                                            if(user.phone){
-    
+                                                          
+                                                            else
                                                                 var code = Codes.generate({
                                                                     length: 4,
                                                                     count: 1,
@@ -649,7 +641,7 @@
                                                                         entreprise : req.params.id,
                                                                         numeroClient : codeClient
                                                                     };
-                                                                    //console.log("Client sms", client);
+                                                                    console.log("Client sms", client);
                                                                     clientService.saveExcel(client,req.params.id);
     
                                                                     let grant = `grant_type=client_credentials`;
@@ -667,39 +659,9 @@
                                                                     }
                                                                       
                                                                 }) 
-    
-                                                            }else{
-                                                                var code = Codes.generate({
-                                                                length:128,
-                                                                count:1,
-                                                                charset: Codes.charset("alphanumeric")
-                                                                });
-                                                                code = code[0];
-                                                                user.code = code;
-                                                                user.save(function(err, user){
-                                                                    if(err)
-                                                                    return res.status(500).json({
-                                                                        success: false,
-                                                                        message: err
-                                                                    });
-                                                                    client={
-                                                                        genre:clientInfo.genre,
-                                                                        adresse:clientInfo.adresse,
-                                                                        dateCreated: new Date(),
-                                                                        user : user._id,
-                                                                        entreprise : req.params.id,
-                                                                        numeroClient : codeClient
-                                                                    };
-                                                                    //console.log("Client email", client);
-                                                                    clientService.saveExcel(client,req.params.id);
-                                                                    clientService.inscriptionClient(user,password);
-                                                                       
-                                                                }) 
-                                                            }   
                                                         });
                                                 });
                                             } 
-
                                         }    
                                            
                                     });

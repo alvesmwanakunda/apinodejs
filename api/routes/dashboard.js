@@ -13,5 +13,11 @@
         app.route('/client/info/client/:id([a-fA-F\\d]{24})')
         .get(Ctrl.getAllInfos);
 
+        app.route('/stat/promotion/sms/:id([a-fA-F\\d]{24})')
+        .get(Ctrl.getPromotionStatSms);
+
+        app.route('/stat/promotion/app/:id([a-fA-F\\d]{24})')
+        .get(Ctrl.getPromotionStatApp);
+
     }
 })();

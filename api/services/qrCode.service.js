@@ -104,6 +104,42 @@ module.exports = {
         //ctx.drawImage(img,xOffset, yOffset, newWidth, newHeight);
         //ctx.drawImage(img,40, 43, 40, 40);
         return canvas.toDataURL("image/png");
+    },
+
+    promotion_qrcode: async(code, width, cwidth)=>{
+
+        const canvas = createCanvas(width, width);
+        QRCode.toCanvas(
+            canvas,
+            code,
+            {
+                errorCorrectionLevel:"H",
+                margin:1,
+                color:{
+                    dark: "#243665",
+                    light: '#ffffff',
+                },
+            }
+        );
+        return canvas.toDataURL("image/png");
+    },
+
+    promotionMobile_qrcode: async(code, width, cwidth)=>{
+
+        const canvas = createCanvas(width, width);
+        QRCode.toCanvas(
+            canvas,
+            code,
+            {
+                errorCorrectionLevel:"H",
+                margin:1,
+                color:{
+                    dark: "#243665",
+                    light: '#ffffff',
+                },
+            }
+        );
+        return canvas.toDataURL("image/png");
     }
 
 

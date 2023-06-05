@@ -6,6 +6,7 @@
     var ObjectId = require('mongoose').Types.ObjectId;
     var Operation = require('../models/operation.model').OperationModel;
     var Promotion = require('../models/promotions.model').PromotionsModel;
+    var Message = require('../models/messageApp.model').MessageAppModel;
 
 
     module.exports = function(acl, app){
@@ -56,10 +57,10 @@
                 acl.isAllowed(req.decoded.id, 'clients', 'retreive', async function(err, aclres){
                     if(aclres){
 
-
-                        let promotions = await Promotion.find({entreprise:new ObjectId(req.params.id), dateEnvoie:{ $eq: new Date() }});
-                        let promotionsms = await Promotion.find({entreprise:new ObjectId(req.params.id),types:"Sms",etat:"envoyée",dateEnvoie:{ $eq: new Date() }});
-                        let promotionapp = await Promotion.find({entreprise:new ObjectId(req.params.id),types:"App",etat:"envoyée",dateEnvoie:{ $eq: new Date() }});
+                        //dateEnvoie:{ $eq: new Date() }
+                        let promotions = await Promotion.find({entreprise:new ObjectId(req.params.id)});
+                        let promotionsms = await Promotion.find({entreprise:new ObjectId(req.params.id),types:"Sms",etat:"envoyée"});
+                        let promotionapp = await Promotion.find({entreprise:new ObjectId(req.params.id),types:"App",etat:"envoyée"});
                        
                         res.json({
                             success: true,
@@ -100,6 +101,74 @@
                     }
                 })
             },
+
+            //statistique promotion
+
+            getPromotionStatApp(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'retreive', async function(err, aclres){
+                    if(aclres){
+
+                        
+                        let promotions = await Promotion.countDocuments({entreprise:new ObjectId(req.params.id),types:'App'});
+                        let tauxmessage = await Message.countDocuments({entreprise:new ObjectId(req.params.id),type:"promotion",lire:true});
+                        let messages = await Message.countDocuments({entreprise:new ObjectId(req.params.id),type:"promotion"});
+
+                        let taux = parseInt(tauxmessage * 100)/parseInt(messages);
+                        //console.log("Promotion", promotions);
+                        //console.log("Taux", tauxmessage);
+                        //console.log("Message", messages);
+                        //console.log("Taux", taux);
+
+                       
+                        res.json({
+                            success: true,
+                            promotions:promotions,
+                            taux:taux.toFixed(2),
+                            message:messages,
+                        });
+                    }else{
+                      return res.status(401).json({
+                       success: false,
+                       message: "401"
+                      });
+                    }
+                })
+
+            },
+
+            getPromotionStatSms(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'retreive', async function(err, aclres){
+                    if(aclres){
+
+                        
+                        let promotions = await Promotion.countDocuments({entreprise:new ObjectId(req.params.id),types:'Sms'});
+                        /*let tauxmessage = await Message.countDocuments({entreprise:new ObjectId(req.params.id),type:"promotion",lire:true});
+                        let messages = await Message.countDocuments({entreprise:new ObjectId(req.params.id),type:"promotion"});
+                        let taux = parseInt(tauxmessage * 100)/parseInt(messages);*/
+                        let taux=0;
+                        let messages=0
+                        //console.log("Promotion", promotions);
+                        //console.log("Message", messages);
+                        //console.log("Taux", taux);
+
+                       
+                        res.json({
+                            success: true,
+                            promotions:promotions,
+                            taux:taux,
+                            message:messages,
+                        });
+                    }else{
+                      return res.status(401).json({
+                       success: false,
+                       message: "401"
+                      });
+                    }
+                })
+
+            }
         }
     }
 

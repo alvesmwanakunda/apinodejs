@@ -75,6 +75,37 @@ module.exports = {
         })
     },
 
+
+    inscriptionSmsAgent:(phone,user,password, token)=>{
+
+        return new Promise(async(resolve, reject)=>{
+
+            try {
+    
+              const response = await axios.post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B221771852694/requests",
+              {
+                "outboundSMSMessageRequest":{
+                  "address":`tel:+221${phone}`,
+                  "senderAddress":"tel:+221771852694",
+                  "senderName": "Wefid",
+                  "outboundSMSTextMessage":{
+                      "message":'Bonjour, \n\n Cher utilisateur \n\n Nous avons bien pris en compte votre inscription sur,Wefid. \n\n Votre identifiant de connexion est le suivant: ' + user.phone +'.\n\n Votre mot de passe temporaire est : ' +password,
+                  }
+                }
+              },
+              {
+                  headers:{ Authorization:`Bearer ${token}`}      
+              });
+    
+              //console.log("Response", response);
+              resolve(response);
+            } catch (error) {
+              reject(error);
+            }
+    
+        })
+    },
+
     inscriptionSmsPhone:(user, token)=>{
 
         return new Promise(async(resolve, reject)=>{

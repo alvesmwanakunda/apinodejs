@@ -212,7 +212,7 @@
                                         
                                         });
                                         if(response.data.access_token){
-                                            messageAppService.notificationSms(req.params.id,messageClient.message,response.data.access_token);
+                                            messageAppService.notificationSms(req.params.id,messageClient,response.data.access_token);
                                         }
 
                                       }

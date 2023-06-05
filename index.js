@@ -141,7 +141,7 @@ function initApp(){
   for(var i=0; i < routes.length; i++)
      if(routes[i].indexOf("routes") !==1) require(routes[i])(app,acl);
 
-  cron.schedule("0 6 * * *", async function () {
+  cron.schedule("0 0 0 * * *", async function () {
 
       functionsCron.AnniversaireClientApp();
       functionsCron.RelancerApp();
