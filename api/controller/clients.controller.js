@@ -50,6 +50,7 @@
                         req.body.nom = req.body.nom;
                         req.body.prenom = req.body.prenom;
                         req.body.role = 'user';
+                        req.body.valid=true;
                        
                         var user = new User(req.body);
 
@@ -589,6 +590,7 @@
                                                 req.body.nom = clientInfo.nom;
                                                 req.body.prenom = clientInfo.prenom;
                                                 req.body.role = 'user';
+                                                req.body.valid=true;
                                                 var codeClient = Codes.generate({
                                                     length:5,
                                                     count:1,
