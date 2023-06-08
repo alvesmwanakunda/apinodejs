@@ -53,7 +53,7 @@ if(process.env.NODE_ENV !=="production"){
   require("dotenv").config();
 }
 
-const port = process.env.PORT || 5000; //Save the port number heroku
+const port = process.env.PORT || 8100; //Save the port number heroku
 //const port = process.env.API_PORT || 5000; //Save the port number
 const MONGO_URL = process.env.MONGODB_URI;
 
@@ -106,7 +106,7 @@ function initApp(){
     if (req.method == "OPTIONS") return res.sendStatus(200);
     next();
   });
-  app.get('/', (req, res)=> res.send('Koonda API ready'));   
+  app.get('/', (req, res)=> res.send('Weefid API ready'));   
   app.use('/api-docs',swaggerUI.serve, swaggerUI.setup(specs)); 
   app.use(function(req,res,next){
     var token =  req.headers.token;
@@ -154,14 +154,15 @@ function initApp(){
       console.log("Cron application");
   }); 
               
-  var server = app.listen(port,()=>{
-      console.log(`Now listening on port ${port}`);
+  var server = app.listen(process.env.PORT,()=>{
+      console.log(`Now listening on port ${process.env.PORT}`);
   });
-
+  console.log("serveur", server);
   
   /*
    socket io
   */
+
    var io = require('socket.io')(server,{
     cors:{origin: '*'}
    });

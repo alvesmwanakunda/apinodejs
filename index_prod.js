@@ -1,7 +1,12 @@
-const express = require('express'); //Import the express dependency
+const express = require('express');
 const app = express(); 
 const fs = require('fs');
-const http = require('http').Server(app);
+const http = require('http');
+const server = http.createServer(app);
+const io = require('socket.io')(server,{
+    cors:{origin: '*'}
+});
+const apiNamespace = io.of('/api/socket.io');
 const mongoose = require('mongoose');
 const bodyParser = require("body-parser");
 const node_acl = require('acl');
@@ -53,8 +58,7 @@ if(process.env.NODE_ENV !=="production"){
   require("dotenv").config();
 }
 
-const port = process.env.PORT || 5000; //Save the port number heroku
-//const port = process.env.API_PORT || 5000; //Save the port number
+const port = process.env.PORT || 8100;
 const MONGO_URL = process.env.MONGODB_URI;
 
 var acl = new node_acl(new node_acl.memoryBackend());
@@ -106,7 +110,7 @@ function initApp(){
     if (req.method == "OPTIONS") return res.sendStatus(200);
     next();
   });
-  app.get('/', (req, res)=> res.send('Koonda API ready'));   
+  app.get('/', (req, res)=> res.send('Weefid API ready'));   
   app.use('/api-docs',swaggerUI.serve, swaggerUI.setup(specs)); 
   app.use(function(req,res,next){
     var token =  req.headers.token;
@@ -118,11 +122,9 @@ function initApp(){
             message: 'Failed to authenticate token.'
           });
         }else{
-          //console.log("Decoded", decoded);
           req.decoded = decoded;
           global.infosUser = decoded;
           acl.addUserRoles(req.decoded.id, Encryption.decrypt(req.decoded.role));
-          //console.log("req.decode.", req.decoded.id);
           next();
         }
       });
@@ -137,7 +139,6 @@ function initApp(){
   
 
   var routes = Files.walk(__dirname + "/api/routes");
-  //console.log("Routes", routes);
   for(var i=0; i < routes.length; i++)
      if(routes[i].indexOf("routes") !==1) require(routes[i])(app,acl);
 
@@ -153,23 +154,16 @@ function initApp(){
       functionsCron.PromotionSmsWefid();
       console.log("Cron application");
   }); 
-              
-  var server = app.listen(port,()=>{
-      console.log(`Now listening on port ${port}`);
-  });
 
-  
-  /*
-   socket io
-  */
-   var io = require('socket.io')(server,{
-    cors:{origin: '*'}
-   });
-   global.io = io;
-   io.on('connection', (socket)=>{
+  global.io = apiNamespace;
+
+  apiNamespace.on('connection', (socket)=>{
     global.socket = socket;
     console.log("Socket run");
-   })
-  
+  })
+              
+  server.listen(process.env.PORT,()=>{
+      console.log(`Now listening on port ${process.env.PORT}`);
+  });
 }
 
