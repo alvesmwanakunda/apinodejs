@@ -283,8 +283,16 @@
 
       app.route('/agent/update/password/:id([a-fA-F\\d]{24})')
          .put(Ctrl.changePasswordControleur);
-         
+
+      app.route('/refresh-token')
+         .post(Ctrl.refreshToken);
+
+      app.route('/verifyRememberWeb/:token')
+         .get(Ctrl.verifyRememberWeb)
       
+      app.route('/deleteRememberWeb')
+         .get(Ctrl.deleteRememberWeb)
+         
   }
   
 })();

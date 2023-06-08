@@ -44,7 +44,8 @@
             type: String,
             required: false,
             select: false
-        }
+        },
+        refreshToken: String,
     });
 
     module.exports = {

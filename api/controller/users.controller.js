@@ -183,7 +183,6 @@
                         success: false,
                         message: "L'authentification a échoué"
                     });
-                  //console.log("Email", req.body.email)
                   var query={};
                   if(Isemail.validate(req.body.emailorphone)){
 
@@ -202,13 +201,7 @@
                   
                   query.password = crypto.createHash('md5').update(req.body.password).digest("hex");
 
-                  //console.log("Query", query);
-
                   User.findOne(query).exec(async function(err, user){
-
-                      //console.log("User", user);
-                      //console.log("Entreprise", entreprise);
-                      //console.log("User", user);
                       
                       if(err)
                         return res.send({
@@ -220,16 +213,21 @@
                              success: false,
                              message: "User not found"
                          }) 
-                      var token = jwt.sign({
-                          id:user._id,
-                          role: Encryption.encrypt(user.role)
-                      }, config.certif, {
-                          expiresIn: '24h'
-                      });
+                      //var token = jwt.sign({id:user._id,role: Encryption.encrypt(user.role)}, config.certif, {expiresIn: '24h'});
 
-                      Role.findOne({
-                          roles:user.role
-                      }, async function(err, role){
+                      var token = jwt.sign({id:user._id,role: Encryption.encrypt(user.role)}, config.certif);
+
+                      //token mobile remember me
+                      var refreshToken = jwt.sign({id:user._id,role: Encryption.encrypt(user.role)}, config.certif, {expiresIn: '7d'});
+                      user.refreshToken = refreshToken;
+                      await user.save();
+                     // Fin
+
+                     // remember me web
+                     if(req.body.rememberMeControl){
+                        tokenService.createToken(user._id,token);
+                     }
+                      Role.findOne({roles:user.role}, async function(err, role){
                           if(err)
                             return res.send({
                                 success: false,
@@ -240,19 +238,12 @@
                               if(entreprise){
                                 connexionService.addConnexion(user._id,entreprise._id);
                               }  
-                          }
-
-                          let tokenUser = await TokenModel.findOne({user:user._id});
-                          if(tokenUser){
-                               tokenService.updateToken(user._id,token);
-                          }else{
-                               tokenService.createToken(user._id,token);
-                          }
-                          //console.log("Token", token);
+                            }
                           res.json({
                               success: true,
                               message:{
                                   token:token,
+                                  refreshToken:refreshToken,
                                   code:token,
                                   user:user,
                                   prenom: (user.prenom ? user.prenom : ''),
@@ -263,6 +254,82 @@
                           });
                       });
                   });
+            },
+
+            verifyRememberWeb:async function(req,res){
+              let token = await TokenModel.findOne({token:req.params.token});
+              //console.log("Token", token);
+              var query={};
+
+              if(token){
+                 let user = await User.findOne({_id:new ObjectId(token.user)});
+                 if(user){
+                    query = {
+                        email:user.email,
+                        valid:true,
+                        desactive:false
+                    }
+                    User.findOne(query).exec(async function(err, user){
+                      
+                        if(err)
+                          return res.send({
+                              success: false,
+                              message: err
+                          });
+                        if(!user) 
+                           return res.json({
+                               success: false,
+                               message: "User not found"
+                           }) 
+
+                        var tokenNew = jwt.sign({id:user._id,role: Encryption.encrypt(user.role)}, config.certif);
+                        tokenService.updateToken(user._id,tokenNew);
+                        res.json({
+                            success: true,
+                            message:{
+                                  token:tokenNew,
+                                  code:tokenNew,
+                                  user:user,
+                                  prenom: (user.prenom ? user.prenom : ''),
+                                  nom: (user.nom ? user.nom : ''),
+                                  email: (user.email ? user.email : ''),
+                                  phone: (user.phone ? user.phone : '')
+                            }
+                        });   
+                    });
+
+                 }
+              }
+            },
+
+            deleteRememberWeb:function(req,res){
+                acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
+                    if(aclres){
+                      //console.log("user id", req.decoded.id); 
+
+                      let token = await TokenModel.findOne({user:new ObjectId(req.decoded.id)});
+                      if(token){
+                        tokenService.deleteToken(req.decoded.id);
+                      }
+                    }else{
+                        return res.status(401).json({
+                            success:false,
+                            message:"401"
+                        })
+                    }
+                })
+            },
+            refreshToken:async function(req,res){
+
+               const {refreshToken} = req.body;
+               const user = await User.findOne({refreshToken});
+
+               if(!user){
+                return res.status(401).json({message:'Jetons de rappel invalides'});
+               }
+               const accesToken = jwt.sign({id:user._id,role: Encryption.encrypt(user.role)}, config.certif, {expiresIn: '24h'});
+               res.json({accesToken});
+
             },
 
             resetPassword:function(req,res){
@@ -356,7 +423,7 @@
                                     
                             });
                             if(response.data.access_token){
-                                smsService.reset(user,code,password,response.data.access_token); 
+                                smsService.reset(user,code,response.data.access_token); 
                             }
                             res.json({
                                 success:true,

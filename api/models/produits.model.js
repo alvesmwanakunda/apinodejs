@@ -4,6 +4,7 @@
     var Schema = mongoose.Schema;
     var Cadeau = require('./cadeau.model').CadeauModel;
     var Depense = require('./depense.model').DepenseModel;
+    var Reduction = require('./reduction.model').ReductionModel;
 
     var produitsSchema = new Schema({
 
@@ -34,6 +35,7 @@
         // Supprimer les enfants associés
         await Cadeau.deleteMany({ produit: this._id });
         await Depense.deleteMany({ produit: this._id });
+        await Reduction.deleteMany({ produit: this._id });
         next();
       });
     module.exports={

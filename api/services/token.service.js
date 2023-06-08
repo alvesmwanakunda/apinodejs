@@ -61,8 +61,32 @@ module.exports ={
                 reject(error);
             }
 
-
         })
 
+    },
+
+    deleteToken:(idUser)=>{
+      
+        return  new Promise (async(resolve, reject)=>{
+
+            try {
+
+                let token = await TokenModel.findOne({user:new ObjectId(idUser)});
+                //console.log("token", token);
+
+                token.delete(function(err,token){
+                    if(err){
+                        console.log("Erreur", err);
+                    }else{
+                      resolve({
+                         status: 'success'
+                      });
+                    }
+                })                
+            } catch (error) {
+                reject(error);
+            }
+
+        })
     }
 }

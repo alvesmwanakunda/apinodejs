@@ -742,39 +742,42 @@
                         let encaisse = await AvoirEncaisse.findOne({_id:req.params.id});
                         let entreprise = await Entreprises.findOne({_id:req.params.entreprise});
 
-                        let operation = Operation.findOne({user:encaisse.user,entreprise:entreprise._id});
-                        let client = await Client.findOne({user:req.params.id});
+                        if(encaisse && entreprise){
+                            let operation = await Operation.findOne({user:encaisse.user, entreprise:req.params.entreprise});
+                            let client = await Client.findOne({user:ObjectId(encaisse.user)});
 
-                        operation.avoir = parseInt(operation.avoir) - parseInt(encaisse.montant);
-                        operation.fin = new Date();
+                                operation.avoir = parseInt(operation.avoir) - parseInt(encaisse.montant);
+                                operation.depense = encaisse.montant;
+                                operation.fin = new Date();
 
-                        if(encaisse.entreprise.equals(entreprise._id)){
+                                if(encaisse.entreprise.equals(entreprise._id)){
 
-                            Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},function(error,operation){
-                                if(err){
-                                    res.status(500).json({
-                                        success:false,
-                                        message:error
+                                    Operation.findOneAndUpdate({_id:new ObjectId(operation._id)},operation,{new:true},function(error,operation){
+                                        if(err){
+                                            res.status(500).json({
+                                                success:false,
+                                                message:error
+                                            })
+                                        }else{
+            
+                                            operationService.addAvoirDepense(encaisse.user,client,encaisse.entreprise,encaisse.montant);
+                                            operationService.deleteAvoirEncaisse(req.params.id);
+                                            operationService.deletelistAvoirEncaisse(req.params.id,req.params.entreprise);
+                                            res.status(200).json({
+                                                success:true,
+                                                operation: operation,
+                                                message: "Votre avoir a été scanné avec succès",
+                                            })
+                                        }
                                     })
+
                                 }else{
-    
-                                    operationService.addAvoirDepense(encaisse.user,client,encaisse.entreprise,encaisse.montant);
-                                    operationService.deleteAvoirEncaisse(req.params.id);
-                                    operationService.deletelistAvoirEncaisse(req.params.id,req.params.entreprise);
+
                                     res.status(200).json({
                                         success:true,
-                                        operation: operation,
-                                        message: "Votre avoir a été scanné avec succès",
+                                        message: "Votre code avoir ne correspond pas a nos codes avoirs"
                                     })
                                 }
-                            })
-
-                        }else{
-
-                            res.status(200).json({
-                                success:true,
-                                message: "Votre code avoir ne correspond pas a nos codes avoirs"
-                            })
                         }
 
                     }else{

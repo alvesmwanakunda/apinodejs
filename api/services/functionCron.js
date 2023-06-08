@@ -64,6 +64,8 @@ let RelancerApp= async function(){
         let operation = await Operation.find({entreprise:new ObjectId(element.entreprise)});
         operation.forEach(async(elementOper) => {
 
+            if(elementOper.fin){
+
             let fin = elementOper.fin.getFullYear()+"-"+(elementOper.fin.getMonth() + 1)+"-"+elementOper.fin.getDate();
         
             const dateFin = moment(fin, "YYYY-MM-DD");
@@ -83,7 +85,9 @@ let RelancerApp= async function(){
                 message.lire = false;
                 message.save();
             }
-            
+
+            }
+     
         });
         
     });
@@ -153,20 +157,23 @@ let RelancerSms= async function(){
 
         operation.forEach(async(elementOper) => {
 
-            let fin = elementOper.fin.getFullYear()+"-"+(elementOper.fin.getMonth() + 1)+"-"+elementOper.fin.getDate();
-        
-            const dateFin = moment(fin, "YYYY-MM-DD");
-            const dateToday =  moment(debut, "YYYY-MM-DD");
-            let numberDate = moment.duration(dateToday.diff(dateFin)).asDays();
+            if(elementOper.fin){
 
-            //console.log("Fin",numberDate);
-
-            if(numberDate >= element.visite){
-
-                MessageAppService.notificationSms(elementOper.user,element.message.message,response.data.access_token)
-               
-            }
+                let fin = elementOper.fin.getFullYear()+"-"+(elementOper.fin.getMonth() + 1)+"-"+elementOper.fin.getDate();
             
+                const dateFin = moment(fin, "YYYY-MM-DD");
+                const dateToday =  moment(debut, "YYYY-MM-DD");
+                let numberDate = moment.duration(dateToday.diff(dateFin)).asDays();
+
+                //console.log("Fin",numberDate);
+
+                if(numberDate >= element.visite){
+
+                    MessageAppService.notificationSms(elementOper.user,element.message.message,response.data.access_token)
+                
+                }
+
+            } 
         });
         
     });

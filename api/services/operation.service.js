@@ -361,7 +361,7 @@ module.exports ={
             let depense = new AvoirDepense();
             let listAvoir = new ListAvoir();
             depense.user = new ObjectId(user);
-            depense.client = new ObjectId(client);
+            depense.client = new ObjectId(client._id);
             depense.entreprise = new ObjectId(entreprise);
             depense.montant = montant;
             depense.creation = new Date();
@@ -373,7 +373,7 @@ module.exports ={
                        status: 'error'
                     });
                  }else{
-                    listAvoir.client = new ObjectId(client);
+                    listAvoir.client = new ObjectId(client._id);
                     listAvoir.entreprise = new ObjectId(entreprise);
                     listAvoir.montant = montant;
                     listAvoir.creation = new Date();

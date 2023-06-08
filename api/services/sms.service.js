@@ -1,5 +1,4 @@
 
-var twilio = require("twilio");
 const axios = require("axios");
 
 module.exports = {
@@ -26,7 +25,7 @@ module.exports = {
               headers:{ Authorization:`Bearer ${token}`}      
           });
 
-          console.log("Response", response);
+           //console.log("Response", response);
           resolve(response);
         } catch (error) {
           reject(error);
@@ -55,8 +54,7 @@ module.exports = {
           {
               headers:{ Authorization:`Bearer ${token}`}      
           });
-
-          console.log("Response", response);
+          //console.log("Response", response);
           resolve(response);
         } catch (error) {
           reject(error);
