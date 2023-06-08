@@ -114,7 +114,12 @@
                         let tauxmessage = await Message.countDocuments({entreprise:new ObjectId(req.params.id),type:"promotion",lire:true});
                         let messages = await Message.countDocuments({entreprise:new ObjectId(req.params.id),type:"promotion"});
 
-                        let taux = parseInt(tauxmessage * 100)/parseInt(messages);
+                        let taux = (parseInt(tauxmessage * 100)/parseInt(messages)).toFixed(2);
+                        if(isNaN(taux)){
+                            taux = 0;
+                            console.log("Ici");
+
+                        }
                         //console.log("Promotion", promotions);
                         //console.log("Taux", tauxmessage);
                         //console.log("Message", messages);
@@ -124,7 +129,7 @@
                         res.json({
                             success: true,
                             promotions:promotions,
-                            taux:taux.toFixed(2),
+                            taux:taux,
                             message:messages,
                         });
                     }else{
