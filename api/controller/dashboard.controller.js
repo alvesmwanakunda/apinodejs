@@ -17,20 +17,18 @@
                 acl.isAllowed(req.decoded.id, 'clients', 'retreive', async function(err, aclres){
                     if(aclres){
 
-                        //var now = new Date();
-                        //let monthNow = (now.getMonth()+1);
-                        //let yearNow = now.getFullYear();
+                       
                         let nbVisite=0;
+                        let currentDate = new Date();
                         
-
                         let clients = await Client.find({entreprise:new ObjectId(req.params.id)});
-                        //let newClient = await Operation.find({entreprise:new ObjectId(req.params.id),nombreVisite:{$eq:0, $lte:5}});
-                        let newClient = await Operation.find({entreprise:new ObjectId(req.params.id),creation:{ $eq: new Date() }});
-                        //let relanceClient = await Operation.find({$and:[{entreprise:new ObjectId(req.params.id)},{$expr:{$and:[{$eq:[{$month:"$fin"},monthNow]},{$eq:[{$year:"$fin"},yearNow]}]}}]});
-                        let relanceClient = await Operation.find({entreprise:new ObjectId(req.params.id),fin:{ $eq: new Date() }});
-                        let nombreVisite = await Operation.aggregate([{$match:{entreprise:new ObjectId(req.params.id),fin:{ $eq: new Date() }}},{$group: {_id:null, nombreVisite:{$sum:"$nombreVisite"}}}]);
+                        let newClient = await Operation.find({entreprise: new ObjectId(req.params.id),$expr: {$eq: [{ $dateToString: { format: "%Y-%m-%d", date: "$creation" } },{ $dateToString: { format: "%Y-%m-%d", date: new Date() } }]}});
+                        let relanceClient = await Operation.find({$expr: {$and: [{ $ne: [{ $dateToString: { format: "%Y-%m-%d", date: "$debut" } }, { $dateToString: { format: "%Y-%m-%d", date: currentDate } }] },{ $eq: [{ $dateToString: { format: "%Y-%m-%d", date: "$fin" } }, { $dateToString: { format: "%Y-%m-%d", date: currentDate }}]}]}});
+                        let nombreVisite = await Operation.aggregate([{$match: {entreprise: new ObjectId(req.params.id),$expr: {$eq: [{ $dateToString: { format: "%Y-%m-%d", date: "$fin" } },{ $dateToString: { format: "%Y-%m-%d", date: new Date() } }]},nombreVisite: { $gt: 0 }}},{$group: {_id: null,nombreVisite: {$sum: 1}}}]);
 
-                        if(nombreVisite.length>0){
+                        //console.log("Nombre visite", nombreVisite);
+
+                        if(nombreVisite.length){
 
                             nbVisite = nombreVisite[0].nombreVisite
                         }else{

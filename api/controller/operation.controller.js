@@ -936,7 +936,7 @@
                                     message:cadeau,
                                 })
                             }
-                        }).populate('cadeau').populate({path:'client', populate:{path:'user',select: 'nom prenom'}});
+                        }).populate({path:'cadeau',populate:{path:'typesPoint',select:'nom'}}).populate({path:'client', populate:{path:'user',select: 'nom prenom'}});
 
                     }else{
                         return res.status(401).json({

@@ -201,7 +201,7 @@ module.exports = {
                 });
              }else{
 
-                operationService.addOperationByEntrepise(idEntreprise, client._id,client.user); 
+                operationService.addOperationByEntrepiseFile(idEntreprise, client._id,client.user); 
                 resolve({
                    client: client,
                    status: 'success'

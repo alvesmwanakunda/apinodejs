@@ -57,17 +57,21 @@
                     
                     if(aclres){
 
-                        Cadeau.find({entreprise:req.params.id},function(err, cadeau){
-
+                        Cadeau.find({entreprise:req.params.id,isArchive:{$ne:true},$or: [
+                            {
+                              dateFin: {
+                                $gte: new Date()
+                              }
+                            },
+                            { dateFin: { $exists: false } }
+                          ]},function(err, cadeau){
                             if(err){
-
                                 return res.status(500).json({
                                     success: false,
                                     message: err
                                 });
 
                             }else{
-
                                 res.json({
                                     success: true,
                                     message:cadeau
@@ -93,7 +97,10 @@
                     
                     if(aclres){
 
-                        Cadeau.find({entreprise:req.params.id,typeCadeau:req.params.type},function(err, cadeau){
+
+                        //Cadeau.find({entreprise:req.params.id,typeCadeau:req.params.type,isArchive:{$ne:true}}
+
+                        Cadeau.find({entreprise:req.params.id,isArchive:{$ne:true},typeCadeau:req.params.type},function(err, cadeau){
 
                             if(err){
 
@@ -284,7 +291,7 @@
 
                           if(operation){
 
-                            Cadeau.find({entreprise:req.params.id,point:{$lte:operation.point}},function(error, cadeau){
+                            Cadeau.find({entreprise:req.params.id,point:{$lte:operation.point},isArchive:{$ne:true}},function(error, cadeau){
 
                                 if(error){
                                     res.status(500).json({
@@ -326,7 +333,7 @@
 
                           let operation = await Operation.findOne({user:req.decoded.id,entreprise:req.params.id});
 
-                          Cadeau.find({entreprise:req.params.id,point:{$gte:operation.achat},client:{$ne:req.decoded.id}},function(error, cadeau){
+                          Cadeau.find({entreprise:req.params.id,point:{$gte:operation.achat},client:{$ne:req.decoded.id},isArchive:{$ne:true}},function(error, cadeau){
 
                             if(error){
                                 res.status(500).json({
@@ -357,7 +364,14 @@
 
                     if(aclres){
 
-                        let cadeau = Cadeau.find({entreprise: req.params.id});
+                        let cadeau = Cadeau.find({entreprise: req.params.id,isArchive:{$ne:true},$or: [
+                            {
+                              dateFin: {
+                                $gte: new Date()
+                              }
+                            },
+                            { dateFin: { $exists: false } }
+                          ]});
 
                         cadeau.count(function(err, count){
 
@@ -398,7 +412,7 @@
 
                           if(operation){
 
-                            Cadeau.find({entreprise:req.params.idEntreprise,point:{$lte:operation.point},client:{$ne:req.params.id}},function(error, cadeau){
+                            Cadeau.find({entreprise:req.params.idEntreprise,point:{$lte:operation.point},client:{$ne:req.params.id},isArchive:{$ne:true}},function(error, cadeau){
 
                                 if(error){
                                     res.status(500).json({
@@ -465,8 +479,73 @@
                     }
 
                 })
-            }
+            },
 
+            verifyCadeauByProduit:function(req,res){
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        let result=Boolean;
+
+                        let cadeaux = await Cadeau.find({produit:req.params.id}).exec();
+                        if(cadeaux.length){
+                            result = true;
+                        }else{
+                            result =false ;
+                        }
+
+                        res.status(200).json({
+                            success:true,
+                            message: result
+                        })
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        }); 
+                    }
+                })
+
+            },
+
+            archiveCadeau(req,res, next){
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        let cadeau = await Cadeau.findOne({_id:req.params.id});
+                        try {
+                            cadeau.isArchive = true;
+                            Cadeau.findOneAndUpdate({_id:req.params.id},cadeau,{new:true},function(err, cadeau){
+                                if(err){
+                                    res.status(500).json({
+                                        success:false,
+                                        message:err
+                                    })
+                                }else{
+                                    res.status(200).json({
+                                        success:true,
+                                        message: cadeau
+                                    })
+                                }
+                            })
+                            
+                        } catch (error) {
+                            next(error);
+                        }
+
+
+                    }else{
+
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+
+                })
+            },
 
             //Post.aggregate([{$match: {postId: 5}}, {$project: {upvotes: {$size: '$upvotes'}}}])
 

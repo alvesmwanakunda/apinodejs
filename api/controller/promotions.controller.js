@@ -2,8 +2,11 @@
 
     'use strict';
     var Promotion = require('../models/promotions.model').PromotionsModel;
+    var Entreprise = require('../models/entreprises.model').EntrepriseModel;
     var messageApp = require('../services/messageApp.service');
     var fs = require("fs");
+    var Codes = require('voucher-code-generator');
+
 
     module.exports = function(acl, app){
 
@@ -74,16 +77,30 @@
 
                 acl.isAllowed(req.decoded.id, 'clients', 'retreive', async function(err, aclres){
 
-
                     if(aclres){
+
+                        let entreprise = await Entreprise.findOne({_id:req.params.id});
+                        var code = Codes.generate({
+                            length: 5,
+                            count: 1,
+                            charset: "0123456789"
+                        });
+                        code = code[0];
 
                         var promotion = new Promotion(req.body);
                         promotion.entreprise = req.params.id;
+
                         if(req.body.jours){
                             promotion.dateEnvoie = req.body.jours;
                         }else{
                             promotion.dateEnvoie = new Date();
                         }
+                        if(req.body.isCode){
+                            promotion.isCode = req.body.isCode;
+                            promotion.code = entreprise.nom+""+code;
+                         }else{
+                            message.isCode = false;
+                         }
                        
 
                         if(req.file){

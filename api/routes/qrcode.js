@@ -16,6 +16,9 @@
         app.route('/qrcode/promotion/:entreprise([a-fA-F\\d]{24})/:type')
            .get(Ctrl.getQrCodePromotion);
 
+           app.route('/qrcode/promotion/global/:id([a-fA-F\\d]{24})')
+           .get(Ctrl.getQrCodePromotionGlobal);
+
         app.route('/qrcode/promotion/mobile/:id([a-fA-F\\d]{24})')
            .get(Ctrl.getQrCodePMobile)
     }

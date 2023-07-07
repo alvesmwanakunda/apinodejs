@@ -436,7 +436,7 @@
                                             });
                                             client.save(); 
                                             if(client){
-                                                operationService.addOperationByEntrepise(req.params.id, client._id,user);
+                                                operationService.addOperationByEntrepiseFile(req.params.id, client._id,user);
                                             }
                                             let grant = `grant_type=client_credentials`;
                                             const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
@@ -523,18 +523,15 @@
                   }
               })
             },
-
             uploadClient(req,res, next){
                 acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){
                     if(aclres){
                       if(req.file == undefined){
                           return res.status(400).send("Please upload an excel file!");
                       } 
-                      console.log("File", req.file); 
                       var client = {};
                       var query = {};
                       let path = "./public/" + req.file.filename;
-                      // console.log("Path", path);
                       const excelData = excelToJson({
                           sourceFile:path,
                           sheets:[{
@@ -555,34 +552,39 @@
                       try {
 
                             let clients = [];
+                            const results = [];
                             clients = excelData.clients;
 
                             for(let i=0; i<clients.length; i++){
 
                                 let clientInfo = clients[i];
-                                //console.log("Info", clientInfo);
-                                if(!clientInfo.phone)
-                                    return res.json({
+                                if(!clientInfo.phone){
+                                    results.push({
                                         success:false,
-                                        message: ""
+                                        message: "Veuillez vérifier le champ phone",
+                                        data: clientInfo
+                                    })
+                                }
+                                else if (!/^\d{9}$/.test(clientInfo.phone)) {
+                                    results.push({
+                                      success: false,
+                                      message: 'Le numéro de téléphone doit être un nombre à 9 chiffres',
+                                      data: clientInfo
                                     });
-                            
-                                    User.findOne({phone:clientInfo.phone}, function(err, userexists){
-
-                                        //console.log("UserExists", userexists);
-                                        if(err)
-                                            return res.status(500).json({
+                                }
+                                else{
+                                    try {
+                                         let userexists = await User.findOne({phone: clientInfo.phone }).exec();
+                                         if(userexists){
+                                            results.push({
                                                 success: false,
-                                                message: err
+                                                message: "Ce client, il est existé dans le système",
+                                                data: clientInfo
                                             });
-                                        //console.log("Number length",JSON.stringify(clientInfo.phone).length);
-
-                                        if(JSON.stringify(clientInfo.phone).length==9){
-
-                                            if(!userexists){
-
+                                         }
+                                         else{
                                                 query ={
-                                                    phone:clientInfo.emailorphone
+                                                    phone:clientInfo.phone
                                                 };
                                                 
                                                 req.body.phone = clientInfo.phone;
@@ -598,75 +600,84 @@
                                                 });
                                                 codeClient = codeClient[0];
     
-                                                var user = new User(req.body);
-                                                //console.log("User ", user);
-                                                
-                                                User.remove(query, function(err){
-    
-                                                       //console.log("Erreur", err);
-    
-                                                        var password = Codes.generate({
+                                                var user = new User(req.body);                                                
+                                                User.remove(query, function(err){    
+                                                    var password = Codes.generate({
                                                         length:8,
                                                         count:1,
                                                         charset: Codes.charset("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-                                                        });
-                                                        password = password[0];
+                                                    });
+                                                    password = password[0];
                                                         
-                                                        user.password = crypto.createHash('md5').update(password).digest("hex");
+                                                    user.password = crypto.createHash('md5').update(password).digest("hex");
     
-                                                        user.save(function(err, user){
-                                                            if(err)
-                                                                return res.status(500).json({
-                                                                    success: false,
-                                                                    message: err
-                                                                });
-                                                          
-                                                            else
-                                                                var code = Codes.generate({
-                                                                    length: 4,
-                                                                    count: 1,
-                                                                    charset: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                                                });
-                                                                code = code[0];
-                                                                user.code = code;
-                                                                user.save(async function(err, user){
-                                                                    if(err)
-                                                                    return res.status(500).json({
+                                                    user.save(function(err, user){
+                                                        if(err)
+                                                            results.push({
+                                                                success: false,
+                                                                message: err
+                                                            });
+                                                        else
+                                                            var code = Codes.generate({
+                                                                length: 4,
+                                                                count: 1,
+                                                                charset: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                                            });
+                                                            code = code[0];
+                                                            user.code = code;
+                                                            user.save(async function(err, user){
+
+                                                                if(err){
+
+                                                                    results.push({
                                                                         success: false,
                                                                         message: err
                                                                     });
+                                                                    
+                                                                }
+                                                                else{
+
                                                                     client={
-                                                                        genre:clientInfo.genre,
-                                                                        adresse:clientInfo.adresse,
-                                                                        dateCreated: new Date(),
-                                                                        user : user._id,
-                                                                        entreprise : req.params.id,
-                                                                        numeroClient : codeClient
+                                                                            genre:clientInfo.genre,
+                                                                            adresse:clientInfo.adresse,
+                                                                            dateCreated: new Date(),
+                                                                            user : user._id,
+                                                                            entreprise : req.params.id,
+                                                                            numeroClient : codeClient
                                                                     };
-                                                                    console.log("Client sms", client);
                                                                     clientService.saveExcel(client,req.params.id);
-    
+        
                                                                     let grant = `grant_type=client_credentials`;
                                                                     const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,
                                                                     {
-                                                                    headers:{
-                                                                        Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
-                                                                    'Content-Type': 'application/x-www-form-urlencoded'
-                                                                    }
-                                                                    
+                                                                        headers:{
+                                                                            Authorization:`Basic ${process.env.ORANGE_TOKEN}`,
+                                                                        'Content-Type': 'application/x-www-form-urlencoded'
+                                                                        }
+                                                                        
                                                                     });
-    
+        
                                                                     if(response.data.access_token){
-                                                                        clientService.inscriptionSms(user,password,response.data.access_token);
+                                                                       clientService.inscriptionSms(user,password,response.data.access_token);
                                                                     }
-                                                                      
-                                                                }) 
-                                                        });
-                                                });
-                                            } 
-                                        }    
-                                           
-                                    });
+                                                                    results.push({
+                                                                        success: true,
+                                                                        message: "Client ajouté avec succès",
+                                                                        data: clientInfo
+                                                                    });
+                                                                }        
+                                                            }) 
+                                                    });
+                                                });   
+                                        } 
+                                    } catch (error) {
+                                        results.push({
+                                            success: false,
+                                            message: "Erreur lors de la recherche de l'utilisateur existant",
+                                            data: clientInfo
+                                          });
+                                    }
+                                }
                             }
 
                             if(excelData){
@@ -678,9 +689,8 @@
                             })
                             } 
 
-                            res.json({
-                                success: true,
-                                message:excelData.clients
+                           res.json({
+                              results: results
                             }); 
                       } catch (error) {
                           next(error)
@@ -694,7 +704,7 @@
                     }
                 })
             },
-
+        
             deleteClient:function(req,res){
 
                 acl.isAllowed(req.decoded.id, 'clients','create', async function(err, aclres){

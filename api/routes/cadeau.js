@@ -28,7 +28,13 @@
             .get(Ctrl.listCadeauByUserByEntrepriseByAchat);
             
         app.route('/cadeau/length/:id([a-fA-F\\d]{24})') 
-            .get(Ctrl.lengthCadeauByEntreprise);    
+            .get(Ctrl.lengthCadeauByEntreprise);
+            
+        app.route('/verify/cadeau/produit/:id([a-fA-F\\d]{24})')
+            .get(Ctrl.verifyCadeauByProduit)
+
+        app.route('/cadeau/archive/:id([a-fA-F\\d]{24})')
+            .get(Ctrl.archiveCadeau)
             
     }
 })();

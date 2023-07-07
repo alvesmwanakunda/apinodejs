@@ -79,6 +79,11 @@
            type:Boolean,
            default:false,
            required:false
+        },
+        isArchive:{
+            type: Boolean,
+            default: false,
+            required:false
         }
     });
     cadeauSchema.pre('remove', async function (next) {

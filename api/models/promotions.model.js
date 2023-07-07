@@ -91,8 +91,16 @@
         dateEnvoie:{
             type: Date,
             required:false
+        },
+        isCode:{
+            type:Boolean,
+            default:false,
+            required:false
+        },
+        code:{
+            type:String,
+            required:false
         }
-
     });
     module.exports={
         PromotionsSchema: promotionsSchema,

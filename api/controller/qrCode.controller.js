@@ -3,6 +3,7 @@
     "use strict";
     var qrCodeService = require('../services/qrCode.service');
     var messageClient = require('../models/messageClient.model').MessageClientModel;
+    var Promotion = require('../models/promotions.model').PromotionsModel;
     var fs = require("fs");
 
     module.exports = function(acl,app){
@@ -128,6 +129,54 @@
                             let code = messageclient.code;
 
                             if(messageclient.isCode){
+                                let qrCode = await qrCodeService.promotion_qrcode(code,100,50);
+                                if(qrCode){
+    
+                                    res.status(200).json({
+                                        success:true,
+                                        qrCode: qrCode
+                                    })
+        
+                                }else{
+                                    res.status(500).json({
+                                        success:false,
+                                        qrCode:"Error qrCode"
+                                    })
+                                }
+                            }else{
+                                res.status(200).json({
+                                    success:false,
+                                    qrCode: "Pas de code"
+                                })
+                            }
+
+                        }else{
+
+                            res.status(200).json({
+                                success:false,
+                                qrCode: "Pas de code"
+                            })
+
+                        }
+
+                    }else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+                })
+            },
+
+            getQrCodePromotionGlobal:function(req,res){
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        let promotion = await Promotion.findOne({_id:req.params.id});
+                        if(promotion){
+                            let code = promotion.code;
+                            if(promotion.isCode){
                                 let qrCode = await qrCodeService.promotion_qrcode(code,100,50);
                                 if(qrCode){
     

@@ -32,7 +32,8 @@ module.exports ={
                 operation.user= new ObjectId(user);
                 operation.creation = new Date(); 
                 operation.debut = new Date(); 
-                //operation.fin = new Date();
+                operation.fin = new Date();
+                operation.nombreVisite = 1;
                 
                 encaisse.creation = new Date();
                 encaisse.user = new ObjectId(user);
@@ -45,6 +46,36 @@ module.exports ={
                     encaisse.point = pointVisite.point;
                 }
 
+                operation.save(function(err,operation){
+
+                    if(err){
+                    console.log("Erreur", err);
+                 }else{
+                    encaisse.save();
+                   resolve({
+                       operation: operation,
+                       status: 'success'
+                    });
+                 }
+                })
+            } catch (error) {
+                reject(error);
+            }
+
+        })
+    },
+
+    addOperationByEntrepiseFile:(idEntreprise, idClient, user)=>{
+
+        return  new Promise (async(resolve, reject)=>{
+
+            let operation = new OperationModel();
+            try {
+
+                operation.entreprise = new ObjectId(idEntreprise);
+                operation.client= new ObjectId(idClient);
+                operation.user= new ObjectId(user);
+                operation.creation = new Date(); 
                 operation.save(function(err,operation){
 
                     if(err){
@@ -341,7 +372,7 @@ module.exports ={
                     listAvoir.montant = montant;
                     listAvoir.creation = new Date();
                     listAvoir.idRef= new ObjectId(encaisse._id);
-                    listAvoir.type="Encaisse"; 
+                    listAvoir.type="Remis"; 
                     listAvoir.save();
                     resolve({
                        encaisse: encaisse,
@@ -378,7 +409,7 @@ module.exports ={
                     listAvoir.montant = montant;
                     listAvoir.creation = new Date();
                     listAvoir.idRef= new ObjectId(depense._id);
-                    listAvoir.type="Depense"; 
+                    listAvoir.type="Réclamé"; 
                     listAvoir.save(); 
                     resolve({
                        encaisse: encaisse,
