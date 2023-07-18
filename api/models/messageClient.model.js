@@ -4,6 +4,8 @@
     
     var mongoose = require('mongoose');
     var Schema = mongoose.Schema;
+    var MessageApp = require('../models/messageApp.model').MessageAppModel;
+
 
     var messageClientSchema=new Schema({
 
@@ -59,6 +61,11 @@
             required:false
         }
 
+    });
+    messageClientSchema.pre('remove', async function (next) {
+        // Supprimer les enfants associés
+        await MessageApp.deleteMany({ message: this._id });
+        next();
     });
     module.exports={
         MessageClientSchema : messageClientSchema,

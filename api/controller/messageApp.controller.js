@@ -5,6 +5,8 @@
     var ObjectId = require('mongoose').Types.ObjectId;
     var Entreprise = require('../models/entreprises.model').EntrepriseModel;
     var messageAppService = require('../services/messageApp.service');
+    var Promotion = require('../models/promotions.model').PromotionsModel;
+    var MessageClient = require('../models/messageClient.model').MessageClientModel;
 
 
     module.exports = function(acl,app){
@@ -193,6 +195,87 @@
 
                 })   
 
+            },
+
+            getMessageByQrcode:function(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        let message = await MessageApp.findOne({_id: req.params.id,entreprise:req.params.entreprise});
+
+                        //console.log("Message", message);
+
+                        if(message){
+                            res.status(200).json({
+                                success:true,
+                                message: "Code promotion approuve"
+                            })
+                        }else{
+                            res.status(500).json({
+                                success:false,
+                                message:"Code promotion non approuve"
+                            })
+                        }   
+                    }
+                    else{
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        });
+                    }
+
+                }) 
+            },
+
+            messageFormulaireQrcode(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        let isPromo = req.body.code.includes("PROMO");
+
+                        if(isPromo){
+
+                            let promotion = await Promotion.findOne({entreprise:req.params.entreprise, code:req.body.code});
+                            if(promotion){
+                                res.status(200).json({
+                                    success:true,
+                                    message: "Code promotion approuve"
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:false,
+                                    message:"Code promotion non approuve"
+                                })
+                            } 
+                        }else{
+                            let message = await MessageClient.findOne({entreprise:req.params.entreprise, code:req.body.code});
+                            if(message){
+                                res.status(200).json({
+                                    success:true,
+                                    message: "Code promotion approuve"
+                                })
+                            }else{
+                                res.status(200).json({
+                                    success:false,
+                                    message:"Code promotion non approuve"
+                                })
+                            }  
+
+                        }
+
+                    }else{
+
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        }); 
+                    }
+
+                })
             }
 
         }

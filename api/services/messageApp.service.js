@@ -485,210 +485,133 @@ module.exports ={
         });
     },
 
+    // sms promotion
+
+    async sendSms(element, sms, accessToken) {
+        try {
+          const resp = await axios.post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B221771852694/requests", {
+            "outboundSMSMessageRequest": {
+              "address": `tel:+221${element.user.phone}`,
+              "senderAddress": "tel:+221771852694",
+              "senderName": "Promotion Wefid",
+              "outboundSMSTextMessage": {
+                "message": `${sms}`
+              }
+            }
+          }, {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          });
+          return resp;
+        } catch (error) {
+          console.error('Erreur lors de l\'envoi du SMS:', error.response.data);
+          throw error;
+        }
+    },
+
     createPromotionSms:(promo)=>{
 
-        return  new Promise (async(resolve, reject)=>{
+        try {
+            return  new Promise (async(resolve, reject)=>{
 
-            let d = new Date();
-            let currentYear = d.getFullYear();
-            var age;
+                let d = new Date();
+                let currentYear = d.getFullYear();
+                var age;
 
-            let grant = `grant_type=client_credentials`;
-            const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,{
-                headers:{Authorization:`Basic ${process.env.ORANGE_TOKEN}`,'Content-Type': 'application/x-www-form-urlencoded'} 
-            });
-
-            //if(response.data.access_token){
-            try {
+                let grant = `grant_type=client_credentials`;
+                const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,{
+                 headers:{Authorization:`Basic ${process.env.ORANGE_TOKEN}`,'Content-Type': 'application/x-www-form-urlencoded'} 
+                });
 
                 let promotion = await Promotion.findOne({_id:promo._id});
                 let clients = await Client.find({entreprise:new ObjectId(promo.entreprise)}).populate('user');
-            
-                clients.forEach(async(element) => {
 
-                   if(element.dateNaissance){
-                       age = currentYear - element.dateNaissance.getFullYear();
-                   }else{
-                       age = 0;
-                   } 
-                   console.log("age", age);
+                let sms = promotion.isCode ? `${promotion.sms}\n\nCe message contient un code de promotion:${promotion.code}`: promotion.sms;
 
-                   if(promotion.sexe=="Touts" && (age>=promotion.age1 && age<=promotion.age2) ){
+                for(const element of clients){
+                    if(element.dateNaissance){
+                        age = currentYear - element.dateNaissance.getFullYear();
+                    }else{
+                        age = 0;
+                    } 
 
-                        const resp = await axios.post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B221771852694/requests",
-                        {
-                            "outboundSMSMessageRequest":{
-                            "address":`tel:+221${element.user.phone}`,
-                            "senderAddress":"tel:+221771852694",
-                            "senderName": "Promotion Wefid",
-                            "outboundSMSTextMessage":{
-                                "message":`${promotion.sms}`
-                            }
-                            }
-                        },
-                        {
-                            headers:{ Authorization:`Bearer ${response.data.access_token}`}      
-                        });
-                        resolve({
-                            message: resp,
-                            status: 'success'
-                        });
-
-                   }if(promotion.sexe=="Femme" && (age>=promotion.age1 && age<=promotion.age2)){
-
-                        const resp = await axios.post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B221771852694/requests",
-                        {
-                            "outboundSMSMessageRequest":{
-                            "address":`tel:+221${element.user.phone}`,
-                            "senderAddress":"tel:+221771852694",
-                            "senderName": "Promotion Wefid",
-                            "outboundSMSTextMessage":{
-                                "message":`${promotion.sms}`
-                            }
-                            }
-                        },
-                        {
-                            headers:{ Authorization:`Bearer ${response.data.access_token}`}      
-                        });
-                        resolve({
-                            message: resp,
-                            status: 'success'
-                        });
-
-
-                   }if(promotion.sexe=="Homme" && (age>=promotion.age1 && age<=promotion.age2)){
-
-
-                        const resp = await axios.post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B221771852694/requests",
-                        {
-                            "outboundSMSMessageRequest":{
-                            "address":`tel:+221${element.user.phone}`,
-                            "senderAddress":"tel:+221771852694",
-                            "senderName": "Promotion Wefid",
-                            "outboundSMSTextMessage":{
-                                "message":`${promotion.sms}`
-                            }
-                            }
-                        },
-                        {
-                            headers:{ Authorization:`Bearer ${response.data.access_token}`}      
-                        });
-                        resolve({
-                            message: resp,
-                            status: 'success'
-                        });
-
-
-                   }
- 
-                });
-
-            } catch (error) {
-                reject(error);
-            }    
-
-        });
+                    if ((promotion.sexe === "Touts" || promotion.sexe === element.genre || promotion.sexe==='') && (age >= promotion.age1 && age <= promotion.age2)) {
+                        try {
+                            const resp = await axios.post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B221771852694/requests", {
+                              "outboundSMSMessageRequest": {
+                                "address": `tel:+221${element.user.phone}`,
+                                "senderAddress": "tel:+221771852694",
+                                "senderName": "Promotion Wefid",
+                                "outboundSMSTextMessage": {
+                                  "message": `${sms}`
+                                }
+                              }
+                            }, {
+                              headers: { Authorization: `Bearer ${response.data.access_token}` }
+                            });
+                        }catch (error) {
+                            console.error('Erreur lors de l\'envoi du SMS:', error.response.data);
+                        }
+                    }
+                }
+                resolve({status: 'success'});
+            });
+        } catch (error) {
+            throw error;       
+        }
     },
 
     createPromotionSmsWifed:(promo)=>{
+        try {
+            return  new Promise (async(resolve, reject)=>{
 
-        return  new Promise (async(resolve, reject)=>{
+                let d = new Date();
+                let currentYear = d.getFullYear();
+                var age;
 
-            let d = new Date();
-            let currentYear = d.getFullYear();
-            var age;
-            let grant = `grant_type=client_credentials`;
-            const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,{
-                headers:{Authorization:`Basic ${process.env.ORANGE_TOKEN}`,'Content-Type': 'application/x-www-form-urlencoded'} 
-            });
-
-            try {
+                let grant = `grant_type=client_credentials`;
+                const response = await axios.post("https://api.orange.com/oauth/v3/token/",grant,{
+                 headers:{Authorization:`Basic ${process.env.ORANGE_TOKEN}`,'Content-Type': 'application/x-www-form-urlencoded'} 
+                });
 
                 let promotion = await Promotion.findOne({_id:promo._id});
                 let clients = await Client.find().populate('user');
-            
-                clients.forEach(async(element) => {
 
-                   if(element.dateNaissance){
-                       age = currentYear - element.dateNaissance.getFullYear();
-                   }else{
-                       age = 0;
-                   } 
-                   console.log("age", age);
+                let sms = promotion.isCode ? `${promotion.sms}\n\nCe message contient un code de promotion:${promotion.code}`: promotion.sms;
 
-                   if(promotion.sexe=="Touts" && (age>=promotion.age1 && age<=promotion.age2) ){
+                for(const element of clients){
+                    if(element.dateNaissance){
+                        age = currentYear - element.dateNaissance.getFullYear();
+                    }else{
+                        age = 0;
+                    } 
 
-
-                        const resp = await axios.post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B221771852694/requests",
-                        {
-                            "outboundSMSMessageRequest":{
-                            "address":`tel:+221${element.user.phone}`,
-                            "senderAddress":"tel:+221771852694",
-                            "senderName": "Promotion Wefid",
-                            "outboundSMSTextMessage":{
-                                "message":`${promotion.sms}`
-                            }
-                            }
-                        },
-                        {
-                            headers:{ Authorization:`Bearer ${response.data.access_token}`}      
-                        });
-                        resolve({
-                            message: resp,
-                            status: 'success'
-                        });
-
-                   }if(promotion.sexe=="Femme" && (age>=promotion.age1 && age<=promotion.age2)){
-
-                        const resp = await axios.post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B221771852694/requests",
-                        {
-                            "outboundSMSMessageRequest":{
-                            "address":`tel:+221${element.user.phone}`,
-                            "senderAddress":"tel:+221771852694",
-                            "senderName": "Promotion Wefid",
-                            "outboundSMSTextMessage":{
-                                "message":`${promotion.sms}`
-                            }
-                            }
-                        },
-                        {
-                            headers:{ Authorization:`Bearer ${response.data.access_token}`}      
-                        });
-                        resolve({
-                            message: resp,
-                            status: 'success'
-                        });
-
-                   }if(promotion.sexe=="Homme" && (age>=promotion.age1 && age<=promotion.age2)){
-
-                        const resp = await axios.post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B221771852694/requests",
-                        {
-                            "outboundSMSMessageRequest":{
-                            "address":`tel:+221${element.user.phone}`,
-                            "senderAddress":"tel:+221771852694",
-                            "senderName": "Promotion Wefid",
-                            "outboundSMSTextMessage":{
-                                "message":`${promotion.sms}`
-                            }
-                            }
-                        },
-                        {
-                            headers:{ Authorization:`Bearer ${response.data.access_token}`}      
-                        });
-                        resolve({
-                            message: resp,
-                            status: 'success'
-                        });
-                   }
- 
-                });
-
-            } catch (error) {
-                reject(error);
-            }
-
-        });
+                    if ((promotion.sexe === "Touts" || promotion.sexe === element.genre || promotion.sexe==='') && (age >= promotion.age1 && age <= promotion.age2)) {
+                        try {
+                            const resp = await axios.post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B221771852694/requests", {
+                              "outboundSMSMessageRequest": {
+                                "address": `tel:+221${element.user.phone}`,
+                                "senderAddress": "tel:+221771852694",
+                                "senderName": "Promotion Wefid",
+                                "outboundSMSTextMessage": {
+                                  "message": `${sms}`
+                                }
+                              }
+                            }, {
+                              headers: { Authorization: `Bearer ${response.data.access_token}` }
+                            });
+                        }catch (error) {
+                            console.error('Erreur lors de l\'envoi du SMS:', error.response.data);
+                        }
+                    }
+                }
+                resolve({status: 'success'});
+            });
+        } catch (error) {
+            throw error;       
+        }
     },
+
+
 
     
 }

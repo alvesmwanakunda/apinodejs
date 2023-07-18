@@ -88,6 +88,12 @@
                         code = code[0];
 
                         var promotion = new Promotion(req.body);
+                        if(req.body.age1){
+                            promotion.age1 = req.body.age1;
+                        }
+                        if(req.body.age2){
+                              promotion.age2 = req.body.age2;
+                        }
                         promotion.entreprise = req.params.id;
 
                         if(req.body.jours){
@@ -97,9 +103,9 @@
                         }
                         if(req.body.isCode){
                             promotion.isCode = req.body.isCode;
-                            promotion.code = entreprise.nom+""+code;
+                            promotion.code = "PROMO"+""+code;
                          }else{
-                            message.isCode = false;
+                            promotion.isCode = false;
                          }
                        
 
@@ -248,13 +254,27 @@
                             promotion.condition = req.body.condition;
                             promotion.interval1 = req.body.interval1;
                             promotion.interval2 = req.body.interval2;
-                            promotion.age1 = req.body.age1;
-                            promotion.age2 = req.body.age2;
+                            if(req.body.age1){
+                              promotion.age1 = req.body.age1;
+                            }
+                            if(req.body.age2){
+                                promotion.age2 = req.body.age2;
+                            }
+                            //promotion.age1 = req.body.age1;
+                            //promotion.age2 = req.body.age2;
                             promotion.sexe = req.body.sexe;
                             promotion.region = req.body.region;
                             promotion.zone = req.body.zone;
                             promotion.nombre = req.body.nombre;
                             promotion.etat = req.body.etat;
+
+                            if(req.body.isCode){
+                                promotion.isCode = req.body.isCode;
+                                promotion.code = "PROMO"+""+code;
+                             }else{
+                                promotion.isCode = false;
+                             }
+
 
                             if(req.file){
 

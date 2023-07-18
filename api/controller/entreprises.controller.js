@@ -297,11 +297,24 @@
                                 t._id === value._id && t.point === value.point
 
                                 ))
-                            );
+                            ).sort((a, b) => {
+                                if (a.point !== undefined && b.point !== undefined) {
+                                  return b.point - a.point; // Trie en ordre décroissant basé sur le champ "point"
+                                }
+                                if (a.point !== undefined) {
+                                  return -1; // a a un point, b n'a pas de point, donc a doit être en premier
+                                }
+                                if (b.point !== undefined) {
+                                  return 1; // b a un point, a n'a pas de point, donc b doit être en premier
+                                }
+                                return 0; // les deux ont ou n'ont pas de point, l'ordre ne change pas
+                              });
 
                         }else{
                             list4 = list3;
                         }
+
+                        //console.log("list",list4);
                        
                         res.status(200).json({
                             success:true,

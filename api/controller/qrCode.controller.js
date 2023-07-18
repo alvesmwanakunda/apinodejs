@@ -216,7 +216,7 @@
                 })
             },
 
-            getQrCodePMobile:function(req,res){
+            /*getQrCodePMobile:function(req,res){
                 acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
 
                     if(aclres){
@@ -225,8 +225,7 @@
                         if(messageclient){
                             let code = messageclient.code;
 
-                            let qrCode = await qrCodeService.promotionMobile_qrcode(code,100,50);
-    ge
+                            let qrCode = await qrCodeService.promotionMobile_qrcode(code,100,50)
                             if(qrCode){
     
                                 res.status(200).json({
@@ -257,7 +256,7 @@
                         });
                     }
                 })
-            }
+            }*/
 
         }
     }

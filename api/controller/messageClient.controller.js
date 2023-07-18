@@ -518,6 +518,47 @@
                     }
 
                 })
+            },
+
+            verifyCodeMessage(req,res){
+
+                acl.isAllowed(req.decoded.id, 'clients', 'create', async function(err, aclres){
+
+                    if(aclres){
+
+                        let message = await MessageClient.findOne({_id:req.params.id});
+
+                        message.photo = null;
+
+                        MessageClient.findOneAndUpdate({_id:req.params.id},message,{ new: true },function(err,message){
+                            if(err){
+
+                                return res.status(500).json({
+                                    success: false,
+                                    message: err
+                                });
+
+                            }else{
+
+                                res.json({
+                                    success: true,
+                                    message:message
+                                });
+
+                            }
+                        })
+
+
+
+                    }else{
+
+                        return res.status(401).json({
+                            success: false,
+                            message: "401"
+                        }); 
+                    }
+
+                })
             }
         }
     }

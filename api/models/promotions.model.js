@@ -4,6 +4,7 @@
 
     var mongoose = require('mongoose');
     var Schema = mongoose.Schema;
+    var MessageApp = require('../models/messageApp.model').MessageAppModel;
 
     var promotionsSchema = new Schema({
 
@@ -54,19 +55,23 @@
         },
         interval1:{
             type: Number,
-            required: false
+            required: false,
+            default:0
         },
         interval2:{
             type: Number,
-            required: false
+            required: false,
+            default:0
         },
         age1:{
             type: Number,
-            required: false
+            required: false,
+            default:0
         },
         age2:{
             type: Number,
-            required: false
+            required: false,
+            default:0
         },
         sexe:{
             type: String,
@@ -82,7 +87,8 @@
         }],
         nombre:{
             type: Number,
-            required: false
+            required: false,
+            default:0
         },
         etat:{
             type: String,
@@ -101,6 +107,11 @@
             type:String,
             required:false
         }
+    });
+    promotionsSchema.pre('remove', async function (next) {
+        // Supprimer les enfants associés
+        await MessageApp.deleteMany({ promotion: this._id });
+        next();
     });
     module.exports={
         PromotionsSchema: promotionsSchema,

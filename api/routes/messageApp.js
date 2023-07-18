@@ -17,5 +17,12 @@
         app.route('/messages/client/:id([a-fA-F\\d]{24})')
            .get(Ctrl.getCountMessageUser)
 
+        app.route('/verify/qrcode/message/:id([a-fA-F\\d]{24})/:entreprise([a-fA-F\\d]{24})')
+           .get(Ctrl.getMessageByQrcode)
+
+         app.route('/verify/qrcode/message/formulaire/:entreprise([a-fA-F\\d]{24})')
+           .post(Ctrl.messageFormulaireQrcode)
+         
+
     }
 })();
